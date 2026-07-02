@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Muhammad Anas - Software Engineering Student | Cybersecurity Enthusiast | Building Practical Software Solutions Through Continuous Learning and Innovation.">
+    <meta name="keywords" content="Muhammad Anas, Software Engineering, Cybersecurity, Portfolio, UMT, Pakistan, C, C++, HTML, CSS, JavaScript, SQL">
+    <meta name="author" content="Muhammad Anas">
+    <meta property="og:title" content="Muhammad Anas - Software Engineering Student">
+    <meta property="og:description" content="Software Engineering Student | Cybersecurity Enthusiast | Building Practical Software Solutions Through Continuous Learning and Innovation.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://muhammadanas.dev">
+    <meta property="og:image" content="https://muhammadanas.dev/assets/images/og-image.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Muhammad Anas - Software Engineering Student">
+    <meta name="twitter:description" content="Software Engineering Student | Cybersecurity Enthusiast | Building Practical Software Solutions Through Continuous Learning and Innovation.">
+    <meta name="theme-color" content="#050816">
+    <title>Muhammad Anas | Software Engineering Student | Cybersecurity Enthusiast</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90' fill='%233B82F6'>MA</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ===== CUSTOM CURSOR ===== -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+    <div class="mouse-glow" id="mouseGlow"></div>
+
+    <!-- ===== LOADER ===== -->
+    <div class="loader" id="loader">
+        <div class="loader-content">
+            <div class="loader-logo">
+                <svg viewBox="0 0 100 100" class="loader-svg">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="url(#loaderGradient)" stroke-width="2.5" stroke-linecap="round" class="loader-circle"/>
+                    <defs>
+                        <linearGradient id="loaderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#3B82F6"/>
+                            <stop offset="50%" stop-color="#7C3AED"/>
+                            <stop offset="100%" stop-color="#06B6D4"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span class="loader-text">MA</span>
+            </div>
+            <div class="loader-bar-container">
+                <div class="loader-bar" id="loaderBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCROLL PROGRESS BAR ===== -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- ===== NAVIGATION ===== -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#hero" class="nav-logo" aria-label="Muhammad Anas Home">
+                <span class="logo-text">M<span class="logo-highlight">A</span></span>
+                <span class="logo-dot"></span>
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#about" class="nav-link" data-section="about">About</a></li>
+                <li><a href="#skills" class="nav-link" data-section="skills">Skills</a></li>
+                <li><a href="#education" class="nav-link" data-section="education">Education</a></li>
+                <li><a href="#projects" class="nav-link" data-section="projects">Projects</a></li>
+                <li><a href="#experience" class="nav-link" data-section="experience">Experience</a></li>
+                <li><a href="#certifications" class="nav-link" data-section="certifications">Certifications</a></li>
+                <li><a href="#achievements" class="nav-link" data-section="achievements">Achievements</a></li>
+                <li><a href="#contact" class="nav-link" data-section="contact">Contact</a></li>
+            </ul>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu" aria-expanded="false">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ===== MOBILE MENU OVERLAY ===== -->
+    <div class="mobile-overlay" id="mobileOverlay">
+        <div class="mobile-menu">
+            <ul class="mobile-links">
+                <li><a href="#about" class="mobile-link" data-section="about">About</a></li>
+                <li><a href="#skills" class="mobile-link" data-section="skills">Skills</a></li>
+                <li><a href="#education" class="mobile-link" data-section="education">Education</a></li>
+                <li><a href="#projects" class="mobile-link" data-section="projects">Projects</a></li>
+                <li><a href="#experience" class="mobile-link" data-section="experience">Experience</a></li>
+                <li><a href="#certifications" class="mobile-link" data-section="certifications">Certifications</a></li>
+                <li><a href="#achievements" class="mobile-link" data-section="achievements">Achievements</a></li>
+                <li><a href="#contact" class="mobile-link" data-section="contact">Contact</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===== HERO SECTION ===== -->
+    <section class="hero" id="hero">
+        <div class="aurora-bg">
+            <div class="aurora aurora-1"></div>
+            <div class="aurora aurora-2"></div>
+            <div class="aurora aurora-3"></div>
+        </div>
+        <div class="grid-pattern"></div>
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-dot"></span>
+                    Available for Internships
+                </div>
+                <h1 class="hero-title">
+                    <span class="hero-greeting">Hi, I'm</span>
+                    <span class="hero-name">
+                        <span class="name-gradient">Muhammad</span>
+                        <span class="name-white"> Anas</span>
+                    </span>
+                </h1>
+                <div class="hero-typing">
+                    <span class="typing-prefix">I'm a</span>
+                    <span class="typing-text" id="typingText"></span>
+                    <span class="typing-cursor">|</span>
+                </div>
+                <p class="hero-description">
+                    A passionate <strong>Software Engineering student</strong> at UMT, Lahore. I enjoy solving real‑world problems using programming and always strive to write clean, efficient, and maintainable code. My goal is to build a strong career in the software industry while specializing in <span class="highlight">cybersecurity</span> and modern <span class="highlight">software engineering</span> practices.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#contact" class="btn btn-primary magnetic-btn" data-magnetic>
+                        <span>Get In Touch</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </a>
+                    <a href="assets/resume/resume.pdf" class="btn btn-secondary magnetic-btn" data-magnetic download>
+                        <span>Download Resume</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </a>
+                </div>
+                <div class="hero-socials">
+                    <a href="https://github.com/muhammadanas702" target="_blank" rel="noopener noreferrer" class="social-icon magnetic-btn" data-magnetic aria-label="GitHub">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                    </a>
+                    <a href="https://www.linkedin.com/in/muhammad-anas-175828378" target="_blank" rel="noopener noreferrer" class="social-icon magnetic-btn" data-magnetic aria-label="LinkedIn">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    </a>
+                    <a href="mailto:anasali2988@gmail.com" class="social-icon magnetic-btn" data-magnetic aria-label="Email">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4L12 13 2 4"/></svg>
+                    </a>
+                    <a href="https://x.com/muhammadanas_20" target="_blank" rel="noopener noreferrer" class="social-icon magnetic-btn" data-magnetic aria-label="Twitter">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image-wrapper">
+                <div class="hero-image-container">
+                    <div class="hero-image-ring"></div>
+                    <div class="hero-image-ring ring-2"></div>
+                    <div class="hero-image-ring ring-3"></div>
+                    <div class="hero-image-placeholder" id="heroProfileImage">
+                        <!-- Sirf image, initials nahi -->
+                        <img src="assets/images/profile.jpg" alt="Muhammad Anas" class="hero-profile-img">
+                    </div>
+                </div>
+                <div class="hero-floating-card card-1">
+                    <div class="floating-icon">🔒</div>
+                    <span>Cybersecurity</span>
+                </div>
+                <div class="hero-floating-card card-2">
+                    <div class="floating-icon">💻</div>
+                    <span>Software Dev</span>
+                </div>
+                <div class="hero-floating-card card-3">
+                    <div class="floating-icon">🤖</div>
+                    <span>AI Enthusiast</span>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <span class="scroll-text">Scroll to explore</span>
+            <div class="scroll-mouse">
+                <div class="scroll-wheel"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== ABOUT SECTION ===== -->
+    <section class="about section" id="about">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">About Me</span>
+                <h2 class="section-title">The Person Behind <span class="gradient-text">the Code</span></h2>
+                <p class="section-subtitle">A brief introduction to who I am and what drives me.</p>
+            </div>
+            <div class="about-grid">
+                <div class="about-card glass-card" data-reveal>
+                    <div class="about-card-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <h3>My Mission</h3>
+                    <p>To become a highly skilled Software Engineer with expertise in cybersecurity and secure software development. I aim to build innovative, reliable, and impactful software solutions that solve real‑world challenges.</p>
+                </div>
+                <div class="about-card glass-card" data-reveal>
+                    <div class="about-card-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    </div>
+                    <h3>Background</h3>
+                    <p>I am Muhammad Anas, a Software Engineering student at the University of Management and Technology (UMT), Lahore. My academic journey has given me a solid foundation in programming, databases, and system design, and I am constantly expanding my technical skills through self‑learning and hands‑on projects.</p>
+                </div>
+                <div class="about-card glass-card" data-reveal>
+                    <div class="about-card-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </div>
+                    <h3>Drive & Ambition</h3>
+                    <p>I believe that continuous learning, consistency, and practical experience are the foundations of an excellent software engineer. I am driven to build a strong career in the software industry while specializing in cybersecurity and modern engineering practices.</p>
+                </div>
+                <div class="about-card glass-card" data-reveal>
+                    <div class="about-card-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <h3>Personality</h3>
+                    <p>I am a quick learner, detail‑oriented, and a strong team player. I am self‑motivated, adaptable, and passionate about technology, with a strong work ethic and good communication skills. I thrive in collaborative environments where ideas are shared freely.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SKILLS SECTION ===== -->
+    <section class="skills section" id="skills">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">My Arsenal</span>
+                <h2 class="section-title">Technical <span class="gradient-text">Skills</span></h2>
+                <p class="section-subtitle">Technologies and tools I work with on a regular basis.</p>
+            </div>
+            <div class="skills-grid">
+                <div class="skill-card glass-card" data-reveal>
+                    <div class="skill-header">
+                        <div class="skill-icon" style="background: rgba(168,185,204,0.15);">
+                            <svg width="28" height="28" viewBox="0 0 24 24"><text x="2" y="20" font-size="18" font-weight="bold" fill="#A8B9CC">C</text></svg>
+                        </div>
+                        <span class="skill-level">Intermediate</span>
+                    </div>
+                    <h3>C</h3>
+                    <p>Procedural programming, memory management, pointers, data structures, and algorithm implementation.</p>
+                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="80" style="--progress-color: #A8B9CC;"></div></div>
+                </div>
+                <div class="skill-card glass-card" data-reveal>
+                    <div class="skill-header">
+                        <div class="skill-icon" style="background: rgba(0,89,156,0.15);">
+                            <svg width="28" height="28" viewBox="0 0 24 24"><text x="1" y="20" font-size="16" font-weight="bold" fill="#00599C">C++</text></svg>
+                        </div>
+                        <span class="skill-level">Intermediate</span>
+                    </div>
+                    <h3>C++</h3>
+                    <p>Object‑oriented programming, STL, templates, inheritance, polymorphism, and system‑level programming.</p>
+                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="75" style="--progress-color: #00599C;"></div></div>
+                </div>
+                <div class="skill-card glass-card" data-reveal>
+                    <div class="skill-header">
+                        <div class="skill-icon" style="background: rgba(110,76,30,0.15);">
+                            <svg width="28" height="28" viewBox="0 0 24 24"><text x="1" y="19" font-size="14" font-weight="bold" fill="#6E4C1E">ASM</text></svg>
+                        </div>
+                        <span class="skill-level">Intermediate</span>
+                    </div>
+                    <h3>Assembly (EMU8086)</h3>
+                    <p>Low‑level programming, registers, memory addressing, interrupts, and processor architecture.</p>
+                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="70" style="--progress-color: #6E4C1E;"></div></div>
+                </div>
+                <div class="skill-card glass-card" data-reveal>
+                    <div class="skill-header">
+                        <div class="skill-icon" style="background: rgba(68,121,161,0.15);">
+                            <svg width="28" height="28" viewBox="0 0 24 24"><text x="1" y="20" font-size="16" font-weight="bold" fill="#4479A1">SQL</text></svg>
+                        </div>
+                        <span class="skill-level">Intermediate</span>
+                    </div>
+                    <h3>SQL & MySQL</h3>
+                    <p>Database design, complex queries, joins, stored procedures, normalization, and optimization.</p>
+                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="78" style="--progress-color: #4479A1;"></div></div>
+                </div>
+                <div class="skill-card glass-card" data-reveal>
+                    <div class="skill-header">
+                        <div class="skill-icon" style="background: rgba(227,79,38,0.15);">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="#E34F26"><path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z"/></svg>
+                        </div>
+                        <span class="skill-level">Advanced</span>
+                    </div>
+                    <h3>HTML5</h3>
+                    <p>Semantic markup, accessibility, SEO‑optimized structure, and modern HTML5 features.</p>
+                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="92" style="--progress-color: #E34F26;"></div></div>
+                </div>
+                <div class="skill-card glass-card" data-reveal>
+                    <div class="skill-header">
+                        <div class="skill-icon" style="background: rgba(21,114,182,0.15);">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="#1572B6"><path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.565-2.438L1.5 0zm14.09 4.465l-.313 3.535H7.582l.21 2.36h7.337l-.628 7.076-3.544.978-3.622-.974-.23-2.59h2.604l.104 1.205 1.094.304 1.16-.31.124-1.337H4.685l.455 5.11 6.868 1.88 6.762-1.88.836-9.436H9.975l-.21-2.36h8.398l.29-3.235H5.707l-.21-2.36h11.76z"/></svg>
+                        </div>
+                        <span class="skill-level">Advanced</span>
+                    </div>
+                    <h3>CSS3</h3>
+                    <p>Advanced layouts, animations, responsive design, Flexbox, Grid, and modern CSS features.</p>
+                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="88" style="--progress-color: #1572B6;"></div></div>
+                </div>
+                <div class="skill-card glass-card" data-reveal>
+                    <div class="skill-header">
+                        <div class="skill-icon" style="background: rgba(247,223,30,0.15);">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="#F7DF1E"><text x="2" y="20" font-size="16" font-weight="bold" fill="#000">JS</text></svg>
+                        </div>
+                        <span class="skill-level">Learning</span>
+                    </div>
+                    <h3>JavaScript</h3>
+                    <p>Currently strengthening my understanding of core JavaScript, DOM manipulation, and interactive web features.</p>
+                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="30" style="--progress-color: #F7DF1E;"></div></div>
+                </div>
+                <div class="skill-card glass-card" data-reveal>
+                    <div class="skill-header">
+                        <div class="skill-icon" style="background: rgba(240,80,50,0.15);">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="#F05032"><path d="M23.546 10.93L13.067.452c-.604-.603-1.582-.603-2.188 0L8.708 2.627l2.76 2.76c.64-.216 1.374-.07 1.884.44.514.515.66 1.255.44 1.898l2.66 2.66c.644-.22 1.384-.074 1.9.44.72.72.72 1.888 0 2.608-.72.72-1.888.72-2.608 0-.543-.543-.675-1.338-.396-2.004l-2.48-2.48v6.53c.176.088.34.202.488.35.72.72.72 1.888 0 2.608-.72.72-1.888.72-2.608 0-.72-.72-.72-1.888 0-2.608.177-.177.38-.305.6-.396V9.11c-.22-.09-.423-.22-.6-.396-.55-.55-.67-1.356-.363-2.026L7.38 3.99 1.45 9.92c-.603.603-.603 1.582 0 2.186l10.48 10.48c.603.603 1.582.603 2.186 0l10.43-10.43c.603-.603.603-1.582 0-2.186z"/></svg>
+                        </div>
+                        <span class="skill-level">Intermediate</span>
+                    </div>
+                    <h3>Git & GitHub</h3>
+                    <p>Version control, branching, merging, pull requests, code reviews, and collaborative workflows.</p>
+                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="82" style="--progress-color: #F05032;"></div></div>
+                </div>
+                <div class="skill-card glass-card" data-reveal>
+                    <div class="skill-header">
+                        <div class="skill-icon" style="background: rgba(0,122,204,0.15);">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="#007ACC"><path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 12.357L10.207 12l7.797-5.944v9.888z"/></svg>
+                        </div>
+                        <span class="skill-level">Advanced</span>
+                    </div>
+                    <h3>VS Code</h3>
+                    <p>Expert IDE usage, extensions, debugging, integrated terminal, and productivity workflows.</p>
+                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="90" style="--progress-color: #007ACC;"></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== EDUCATION SECTION ===== -->
+    <section class="education section" id="education">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Academic Journey</span>
+                <h2 class="section-title">My <span class="gradient-text">Education</span></h2>
+                <p class="section-subtitle">The academic path that shaped my engineering mindset.</p>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item" data-reveal>
+                    <div class="timeline-marker">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-line"></div>
+                    </div>
+                    <div class="timeline-card glass-card">
+                        <div class="timeline-badge">Current</div>
+                        <span class="timeline-date">2024 — Present</span>
+                        <h3>Bachelor of Science in Software Engineering</h3>
+                        <p class="timeline-institution">University of Management and Technology (UMT), Lahore</p>
+                        <p class="timeline-desc">Pursuing a comprehensive degree covering software architecture, database systems, cybersecurity fundamentals, algorithms, and modern development practices. Active participant in tech societies and coding competitions.</p>
+                        <div class="timeline-tags">
+                            <span>Software Engineering</span>
+                            <span>Cybersecurity</span>
+                            <span>AI</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="timeline-item" data-reveal>
+                    <div class="timeline-marker">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-line"></div>
+                    </div>
+                    <div class="timeline-card glass-card">
+                        <span class="timeline-date">2022 — 2024</span>
+                        <h3>Intermediate — Pre‑Medical</h3>
+                        <p class="timeline-institution">The Crescent College, BISE Gujranwala</p>
+                        <p class="timeline-desc">Completed FSc. Pre‑Medical with a score of <strong>873 / 1200</strong>. Developed strong analytical and problem‑solving skills that later translated well into software engineering.</p>
+                    </div>
+                </div>
+                <div class="timeline-item" data-reveal>
+                    <div class="timeline-marker">
+                        <div class="timeline-dot timeline-dot-end"></div>
+                    </div>
+                    <div class="timeline-card glass-card">
+                        <span class="timeline-date">2020 — 2022</span>
+                        <h3>Matriculation — Science</h3>
+                        <p class="timeline-institution">Educational School System, Qila Kalar Wala, BISE Gujranwala</p>
+                        <p class="timeline-desc">Overall marks: <strong>1002 / 1100</strong> (Grade 9: <strong>492 / 505</strong>). Built a strong academic foundation and discovered a passion for technology and computing.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PROJECTS SECTION ===== -->
+    <section class="projects section" id="projects">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">My Work</span>
+                <h2 class="section-title">Featured <span class="gradient-text">Projects</span></h2>
+                <p class="section-subtitle">A selection of academic projects that showcase my skills and passion.</p>
+            </div>
+            <div class="projects-grid">
+                <div class="project-card glass-card" data-reveal>
+                    <div class="project-image-wrapper">
+                        <div class="project-image-placeholder" style="background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        </div>
+                        <div class="project-image-overlay">
+                            <a href="#" class="project-overlay-btn" aria-label="View Project">View Project</a>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <span class="project-category">System Programming</span>
+                        <h3>Student Management System</h3>
+                        <p>A CLI‑based application built in C++ for managing student records, attendance, and grades. Demonstrates OOP, file handling, and menu‑driven design.</p>
+                        <div class="project-tech">
+                            <span>C++</span>
+                            <span>File Handling</span>
+                            <span>OOP</span>
+                        </div>
+                        <div class="project-links">
+                            <a href="https://github.com/muhammadanas702/student-management" target="_blank" rel="noopener noreferrer" class="project-link github-link">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                                GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-card glass-card" data-reveal>
+                    <div class="project-image-wrapper">
+                        <div class="project-image-placeholder" style="background: linear-gradient(135deg, #0d1b2a, #1b2838, #1a3a4a);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        </div>
+                        <div class="project-image-overlay">
+                            <a href="#" class="project-overlay-btn" aria-label="View Project">View Project</a>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <span class="project-category">Database</span>
+                        <h3>Library Database System</h3>
+                        <p>A fully normalized MySQL database for library management featuring complex queries, stored procedures, triggers, and a reporting module.</p>
+                        <div class="project-tech">
+                            <span>SQL</span>
+                            <span>MySQL</span>
+                            <span>Database Design</span>
+                        </div>
+                        <div class="project-links">
+                            <a href="https://github.com/muhammadanas702/library-db" target="_blank" rel="noopener noreferrer" class="project-link github-link">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                                GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-card glass-card" data-reveal>
+                    <div class="project-image-wrapper">
+                        <div class="project-image-placeholder" style="background: linear-gradient(135deg, #1a1a2e, #1a1a3e, #1e1e3e);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        </div>
+                        <div class="project-image-overlay">
+                            <a href="#" class="project-overlay-btn" aria-label="View Project">View Project</a>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <span class="project-category">Low‑Level Programming</span>
+                        <h3>Assembly Language Programs</h3>
+                        <p>A collection of EMU8086 assembly programs covering arithmetic operations, string manipulation, and hardware interfacing concepts.</p>
+                        <div class="project-tech">
+                            <span>Assembly</span>
+                            <span>EMU8086</span>
+                            <span>Low‑Level</span>
+                        </div>
+                        <div class="project-links">
+                            <a href="https://github.com/muhammadanas702/assembly-programs" target="_blank" rel="noopener noreferrer" class="project-link github-link">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                                GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-card glass-card" data-reveal>
+                    <div class="project-image-wrapper">
+                        <div class="project-image-placeholder" style="background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                        </div>
+                        <div class="project-image-overlay">
+                            <a href="#" class="project-overlay-btn" aria-label="View Project">View Project</a>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <span class="project-category">Web Development</span>
+                        <h3>Personal Portfolio Website</h3>
+                        <p>This very website — a premium, responsive portfolio built from scratch with HTML5, CSS3, and Vanilla JavaScript. No frameworks, no libraries.</p>
+                        <div class="project-tech">
+                            <span>HTML5</span>
+                            <span>CSS3</span>
+                            <span>JavaScript</span>
+                        </div>
+                        <div class="project-links">
+                            <a href="https://github.com/muhammadanas702/portfolio" target="_blank" rel="noopener noreferrer" class="project-link github-link">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                                GitHub
+                            </a>
+                            <a href="#" class="project-link demo-link">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                Live Demo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== EXPERIENCE SECTION ===== -->
+    <section class="experience section" id="experience">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Professional Path</span>
+                <h2 class="section-title">Work <span class="gradient-text">Experience</span></h2>
+                <p class="section-subtitle">My professional journey and practical exposure.</p>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item" data-reveal>
+                    <div class="timeline-marker">
+                        <div class="timeline-dot timeline-dot-active"></div>
+                        <div class="timeline-line"></div>
+                    </div>
+                    <div class="timeline-card glass-card">
+                        <div class="timeline-badge">Active</div>
+                        <span class="timeline-date">2024 — Present</span>
+                        <h3>Software Engineering Student</h3>
+                        <p class="timeline-institution">University of Management and Technology (UMT)</p>
+                        <p class="timeline-desc">Currently pursuing a Bachelor's degree in Software Engineering. Engaging in coursework covering programming fundamentals, data structures, database systems, cybersecurity principles, and software design methodologies. Actively working on academic projects and building a strong technical portfolio.</p>
+                        <div class="timeline-tags">
+                            <span>Programming</span>
+                            <span>Problem Solving</span>
+                            <span>Team Projects</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="timeline-item" data-reveal>
+                    <div class="timeline-marker">
+                        <div class="timeline-dot timeline-dot-future"></div>
+                    </div>
+                    <div class="timeline-card glass-card timeline-card-future">
+                        <span class="timeline-date">Upcoming</span>
+                        <h3>Future Internship / Role</h3>
+                        <p class="timeline-institution">Open to Opportunities</p>
+                        <p class="timeline-desc">Eager to apply my skills in a professional environment. Looking for internship opportunities in software development, cybersecurity, or related fields where I can contribute meaningfully while continuing to learn and grow.</p>
+                        <div class="timeline-tags">
+                            <span>Seeking Internship</span>
+                            <span>Open to Work</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== CERTIFICATIONS SECTION ===== -->
+    <section class="certifications section" id="certifications">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Credentials</span>
+                <h2 class="section-title">My <span class="gradient-text">Certifications</span></h2>
+                <p class="section-subtitle">Professional certifications and courses completed.</p>
+            </div>
+            <div class="certs-grid" id="certsGrid">
+                <div class="cert-empty glass-card" data-reveal>
+                    <div class="cert-empty-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                    </div>
+                    <h3>Certifications Coming Soon</h3>
+                    <p>I'm actively pursuing industry‑recognized certifications. This section will be updated as I complete them. Check back soon!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== ACHIEVEMENTS SECTION ===== -->
+    <section class="achievements section" id="achievements">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Milestones</span>
+                <h2 class="section-title">My <span class="gradient-text">Achievements</span></h2>
+                <p class="section-subtitle">Notable accomplishments and recognition.</p>
+            </div>
+            <div class="achievements-grid" id="achievementsGrid">
+                <div class="achievement-empty glass-card" data-reveal>
+                    <div class="achievement-empty-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </div>
+                    <h3>Achievements Coming Soon</h3>
+                    <p>As I progress through my academic and professional journey, I'll be adding my achievements here. Stay tuned for updates!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== CONTACT SECTION ===== -->
+    <section class="contact section" id="contact">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Get In Touch</span>
+                <h2 class="section-title">Let's <span class="gradient-text">Connect</span></h2>
+                <p class="section-subtitle">Have a question or want to work together? Reach out!</p>
+            </div>
+            <div class="contact-grid">
+                <div class="contact-info" data-reveal>
+                    <div class="contact-info-card glass-card">
+                        <div class="contact-info-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        </div>
+                        <div>
+                            <h4>Location</h4>
+                            <p>Lahore, Punjab, Pakistan</p>
+                        </div>
+                    </div>
+                    <div class="contact-info-card glass-card">
+                        <div class="contact-info-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4L12 13 2 4"/></svg>
+                        </div>
+                        <div>
+                            <h4>Email</h4>
+                            <p>anasali2988@gmail.com</p>
+                        </div>
+                    </div>
+                    <div class="contact-info-card glass-card">
+                        <div class="contact-info-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        </div>
+                        <div>
+                            <h4>Phone</h4>
+                            <p>+92 347 3534323</p>
+                        </div>
+                    </div>
+                    <div class="contact-socials glass-card">
+                        <h4>Follow Me</h4>
+                        <div class="contact-social-icons">
+                            <a href="https://github.com/muhammadanas702" target="_blank" rel="noopener noreferrer" class="contact-social-icon magnetic-btn" data-magnetic aria-label="GitHub">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                            </a>
+                            <a href="https://www.linkedin.com/in/muhammad-anas-175828378" target="_blank" rel="noopener noreferrer" class="contact-social-icon magnetic-btn" data-magnetic aria-label="LinkedIn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                            </a>
+                            <a href="https://x.com/muhammadanas_20" target="_blank" rel="noopener noreferrer" class="contact-social-icon magnetic-btn" data-magnetic aria-label="Twitter">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-form-wrapper" data-reveal>
+                    <form class="contact-form glass-card" id="contactForm">
+                        <h3>Send a Message</h3>
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" placeholder="Your full name" required autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" placeholder="your.email@example.com" required autocomplete="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <input type="text" id="subject" name="subject" placeholder="What's this about?">
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" rows="5" placeholder="Write your message here..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary magnetic-btn" data-magnetic>
+                            <span>Send Message</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        </button>
+                        <div class="form-feedback" id="formFeedback"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-top">
+                <a href="#hero" class="footer-logo">
+                    <span class="logo-text">M<span class="logo-highlight">A</span></span>
+                </a>
+                <ul class="footer-links">
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#skills">Skills</a></li>
+                    <li><a href="#projects">Projects</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="currentYear"></span> Muhammad Anas. All rights reserved.</p>
+                <p class="footer-tagline">Built with ❤️ using HTML5, CSS3 & Vanilla JavaScript</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ===== BACK TO TOP BUTTON ===== -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+
+    <script src="script.js"></script>
+
+  <!-- ===== INTERACTIVE TERMINAL ===== -->
+<div class="terminal-launcher" id="terminalLauncher" title="Open Terminal">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="4 17 10 11 4 5"></polyline>
+        <line x1="12" y1="19" x2="20" y2="19"></line>
+    </svg>
+</div>
+
+<div class="terminal-window" id="terminalWindow">
+    <div class="terminal-header">
+        <span>guest@muhammadanas:~$</span>
+        <button id="terminalClose">×</button>
+    </div>
+    <div class="terminal-body" id="terminalBody">
+        <div class="terminal-line">Welcome to Muhammad Anas' Terminal. Type <span class="cmd-highlight">help</span> to start.</div>
+    </div>
+    <div class="terminal-input-line">
+        <span class="prompt">guest@anas:~$</span>
+        <input type="text" id="terminalInput" autofocus autocomplete="off" spellcheck="false">
+    </div>
+</div>  
+
+</body>
+</html>
