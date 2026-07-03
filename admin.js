@@ -1,5 +1,5 @@
 /* ============================================
-   ADMIN PANEL - SUPER RESPONSIVE CURSOR
+   ADMIN PANEL – FULL WORKING VERSION
    ============================================ */
 const ADMIN_PASSWORD_KEY = 'adminPassword';
 const DEFAULT_PASSWORD = 'admin123';
@@ -102,12 +102,14 @@ function saveAllData() {
     portfolioData.phone = document.getElementById('contactPhone').value;
     portfolioData.location = document.getElementById('contactLocation').value;
   }
+  const rl = document.getElementById('resumeLink');
+  if (rl) portfolioData.resumeLink = rl.value;
   localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
   alert('✅ All changes saved!');
 }
 
 // ===== TABS =====
-const tabs = ['hero','about','skills','education','projects','experience','certifications','achievements','contact','settings'];
+const tabs = ['hero','about','skills','education','projects','experience','certifications','achievements','contact','resume','settings'];
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab')[tabs.indexOf(tab)].classList.add('active');
@@ -128,6 +130,7 @@ function renderTab(tab) {
     case 'certifications': c.innerHTML = certificationsHTML(); break;
     case 'achievements': c.innerHTML = achievementsHTML(); break;
     case 'about': c.innerHTML = aboutHTML(); break;
+    case 'resume': c.innerHTML = resumeHTML(); break;
     case 'settings': c.innerHTML = settingsHTML(); break;
   }
   refreshCursorHovers();
@@ -155,6 +158,42 @@ function aboutHTML() {
   return `<h3>About Cards</h3>${portfolioData.about.map((a,i)=>`<div class="list-item"><div class="form-group"><label>Icon</label><select onchange="portfolioData.about[${i}].icon=this.value">${iconList.map(ic=>`<option ${a.icon===ic?'selected':''}>${ic}</option>`).join('')}</select></div><div class="form-group"><label>Title</label><input value="${esc(a.title)}" onchange="portfolioData.about[${i}].title=this.value"></div><div class="form-group"><label>Text</label><textarea onchange="portfolioData.about[${i}].text=this.value">${esc(a.text)}</textarea></div><button class="remove-btn" onclick="portfolioData.about.splice(${i},1);renderTab('about')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.about.push({icon:'clock',title:'',text:''});renderTab('about')">${I.plus} Add Card</button>`;
 }
 
+// ===== RESUME TAB =====
+function resumeHTML() {
+  return `<h3>Resume / CV</h3>
+    <div class="form-group">
+      <label>Resume Link (URL or base64)</label>
+      <input id="resumeLink" value="${esc(portfolioData.resumeLink || 'assets/resume/resume.pdf')}">
+    </div>
+    <div class="form-group">
+      <label>Upload PDF (max 2MB recommended)</label>
+      <input type="file" accept=".pdf" onchange="uploadResume(this)">
+    </div>
+    <p style="color:#94A3B8; font-size:0.85rem;">If you upload a PDF, it will be stored as base64 in your browser's localStorage. This means it will only work on this device/browser.</p>
+    ${portfolioData.resumeLink && !portfolioData.resumeLink.startsWith('data:') ? `<iframe src="${portfolioData.resumeLink}" width="100%" height="400px" style="border:none; border-radius:10px; margin-top:1rem;"></iframe>` : ''}`;
+}
+
+function uploadResume(input) {
+  const file = input.files[0];
+  if (!file || file.type !== 'application/pdf') {
+    alert('Please select a valid PDF file.');
+    return;
+  }
+  if (file.size > 3 * 1024 * 1024) {
+    alert('File size exceeds 3MB. Please use a smaller file.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    portfolioData.resumeLink = e.target.result;
+    localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
+    renderTab('resume');
+    alert('Resume uploaded successfully! Don\'t forget to click "Save All".');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ===== SETTINGS =====
 function settingsHTML() {
   return `<h3>Settings</h3>
     <div class="form-group"><label>Current Password</label><input id="currentPassword" type="password" placeholder="Enter current password"></div>
@@ -205,23 +244,19 @@ let mx=0, my=0, cx=0, cy=0, dx=0, dy=0;
 document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
 
 (function anim() {
-  // Outer ring: fast follow (0.5)
   cx += (mx - cx) * 0.5;
   cy += (my - cy) * 0.5;
   c.style.left = cx+'px';
   c.style.top = cy+'px';
-  // Inner dot: instant follow (0.8)
   dx += (mx - dx) * 0.8;
   dy += (my - dy) * 0.8;
   cd.style.left = dx+'px';
   cd.style.top = dy+'px';
-  // Glow directly on mouse
   mg.style.left = mx+'px';
   mg.style.top = my+'px';
   requestAnimationFrame(anim);
 })();
 
-// Click effect
 document.addEventListener('mousedown', () => {
   c.style.transform = 'translate(-50%, -50%) scale(0.8)';
   cd.style.transform = 'translate(-50%, -50%) scale(1.2)';
@@ -231,7 +266,6 @@ document.addEventListener('mouseup', () => {
   cd.style.transform = 'translate(-50%, -50%) scale(1)';
 });
 
-// Magnetic buttons & hover
 function applyMagnetic() {
   document.querySelectorAll('.btn-primary, .btn-save, .btn-danger, .btn-logout, .btn-secondary, .add-btn, .remove-btn, .tab').forEach(btn => {
     btn.addEventListener('mousemove', e => {
