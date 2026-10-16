@@ -88,6 +88,41 @@ let skillProgressBars = document.querySelectorAll('.skill-progress-bar');
 let magneticBtns = document.querySelectorAll('[data-magnetic]');
 
 // ===== ADMIN REBUILD FUNCTIONS =====
+// ===== DESIGN (colours, fonts, animations, section order from data.json) =====
+const FONTS = { 'Poppins': 'Poppins:wght@400;500;600;700', 'Inter': 'Inter:wght@400;500;600;700', 'Space Grotesk': 'Space+Grotesk:wght@500;700', 'Montserrat': 'Montserrat:wght@400;500;600;700', 'Roboto': 'Roboto:wght@400;500;700', 'Outfit': 'Outfit:wght@400;500;600;700', 'Raleway': 'Raleway:wght@400;500;600;700', 'Playfair Display': 'Playfair+Display:wght@500;700', 'Lora': 'Lora:wght@400;500;700', 'JetBrains Mono': 'JetBrains+Mono:wght@400;500;700' };
+function applyDesign(D) {
+    const root = document.documentElement, t = D.theme || {}, ok = c => /^#[0-9a-f]{6}$/i.test(c || '');
+    const p = ok(t.primary) ? t.primary : '#3B82F6', sc = ok(t.secondary) ? t.secondary : '#7C3AED', ac = ok(t.accent) ? t.accent : '#06B6D4';
+    root.style.setProperty('--primary-blue', p); root.style.setProperty('--primary-purple', sc); root.style.setProperty('--primary-cyan', ac);
+    root.style.setProperty('--gradient-1', 'linear-gradient(135deg, ' + p + ', ' + sc + ')');
+    root.style.setProperty('--gradient-2', 'linear-gradient(135deg, ' + sc + ', ' + ac + ')');
+    root.style.setProperty('--gradient-3', 'linear-gradient(135deg, ' + ac + ', ' + p + ')');
+    const fam = [];
+    [['headingFont', '--font-heading', 'Space Grotesk'], ['bodyFont', '--font-primary', 'Poppins']].forEach(([k, v, def]) => {
+        const f = Object.prototype.hasOwnProperty.call(FONTS, t[k]) ? t[k] : def;
+        root.style.setProperty(v, "'" + f + "', sans-serif");
+        if (f !== def) fam.push('family=' + FONTS[f]);
+    });
+    if (fam.length && !document.getElementById('customFonts')) {
+        const l = document.createElement('link'); l.id = 'customFonts'; l.rel = 'stylesheet';
+        l.href = 'https://fonts.googleapis.com/css2?' + fam.join('&') + '&display=swap'; document.head.appendChild(l);
+    }
+    const fs = Number(t.fontSize); if (fs >= 14 && fs <= 20) root.style.fontSize = fs + 'px';
+    const an = D.anim || {}, b = document.body.classList;
+    b.toggle('no-cursor', an.cursor === false); b.toggle('no-aurora', an.aurora === false); b.toggle('no-loader', an.loader === false);
+    b.toggle('no-reveal', an.reveal === false); b.toggle('no-motion', an.motion === false);
+    CONFIG.noTyping = an.typing === false;
+    if (CONFIG.noTyping && typingText) typingText.textContent = CONFIG.typingWords[0] || '';
+    const ids = ['about', 'skills', 'education', 'projects', 'experience', 'certifications', 'achievements', 'contact'];
+    const order = (Array.isArray(D.sectionOrder) ? D.sectionOrder : []).filter(i => ids.includes(i));
+    ids.forEach(i => { if (!order.includes(i)) order.push(i); });
+    const footer = document.querySelector('footer.footer');
+    if (footer) order.forEach(id => { const el = document.getElementById(id); if (el) footer.parentNode.insertBefore(el, footer); });
+    document.querySelectorAll('.nav-links, .mobile-links').forEach(ul => order.forEach(id => {
+        const a = ul.querySelector('[data-section="' + id + '"]'), li = a && a.closest('li'); if (li) ul.appendChild(li);
+    }));
+}
+
 function rebuildAllSections() {
     if (!PORTFOLIO_DATA) return;
     const D = Object.assign({}, PORTFOLIO_DATA);
@@ -333,7 +368,7 @@ function rebuildAllSections() {
         const el = document.getElementById(id); if (el) el.hidden = off;
         document.querySelectorAll('[data-section="' + id + '"], .footer-links a[href="#' + id + '"]').forEach(a => { (a.closest('li') || a).hidden = off; });
     });
-    if (D.theme && /^#[0-9a-f]{6}$/i.test(D.theme.primary || '')) document.documentElement.style.setProperty('--primary-blue', D.theme.primary);
+    applyDesign(D);
     document.querySelectorAll('a[download]').forEach(a => {
         a.hidden = D.resumeEnabled === false;
         const sp = a.querySelector('span'); if (sp && D.resumeLabel) sp.textContent = String(D.resumeLabel).slice(0, 40);
@@ -548,6 +583,7 @@ let isDeleting = false;
 let currentText = '';
 
 function typeEffect() {
+    if (CONFIG.noTyping) return;
     const words = CONFIG.typingWords;
     const fullWord = String(words[wordIndex] ?? '');
     if (isDeleting) {

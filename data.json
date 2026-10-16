@@ -247,9 +247,25 @@
   "achievements": [],
   "sections": {},
   "theme": {
-    "primary": "#3B82F6"
+    "primary": "#3B82F6",
+    "secondary": "#7C3AED",
+    "accent": "#06B6D4",
+    "headingFont": "Space Grotesk",
+    "bodyFont": "Poppins",
+    "fontSize": 16
   },
   "resumeEnabled": true,
   "resumeLabel": "Download Resume",
-  "contactKey": ""
+  "contactKey": "",
+  "anim": {},
+  "sectionOrder": [
+    "about",
+    "skills",
+    "education",
+    "projects",
+    "experience",
+    "certifications",
+    "achievements",
+    "contact"
+  ]
 }

@@ -1413,3 +1413,11 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible, input:focu
 }
 
 [hidden] { display: none !important; }
+
+/* ===== ADMIN-CONTROLLED TOGGLES ===== */
+.no-cursor .cursor, .no-cursor .cursor-dot, .no-cursor .mouse-glow { display: none !important; }
+.no-cursor, .no-cursor * { cursor: auto !important; }
+.no-aurora .aurora-bg { display: none !important; }
+.no-loader .loader { display: none !important; }
+.no-reveal [data-reveal] { opacity: 1 !important; transform: none !important; }
+.no-motion *, .no-motion *::before, .no-motion *::after { animation: none !important; transition: none !important; }

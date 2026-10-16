@@ -217,8 +217,30 @@ function sectionsHTML() {
     + Object.entries(SECTION_LABELS).map(([k, l]) => row(l + ' section', sec[k] !== false, `portfolioData.sections=portfolioData.sections||{};portfolioData.sections.${k}=this.checked`, k)).join('')
     + row('"Download Resume" button', portfolioData.resumeEnabled !== false, 'portfolioData.resumeEnabled=this.checked', 'resume');
 }
+const FONT_LIST = ['Poppins','Inter','Space Grotesk','Montserrat','Roboto','Outfit','Raleway','Playfair Display','Lora','JetBrains Mono'];
+function setTheme(k, v) { portfolioData.theme = Object.assign({}, portfolioData.theme, { [k]: v }); }
+function setAnim(k, v) { portfolioData.anim = Object.assign({}, portfolioData.anim, { [k]: v }); }
+function orderList() {
+  const ids = Object.keys(SECTION_LABELS), o = (portfolioData.sectionOrder || []).filter(i => ids.includes(i));
+  ids.forEach(i => { if (!o.includes(i)) o.push(i); });
+  return o;
+}
+function moveSection(i, d) {
+  const o = orderList(), j = i + d;
+  if (j < 0 || j >= o.length) return;
+  [o[i], o[j]] = [o[j], o[i]]; portfolioData.sectionOrder = o; renderTab('theme');
+}
 function themeHTML() {
-  return `<h3>Theme</h3><div class="form-group"><label>Main accent colour</label><input type="color" value="${esc(portfolioData.theme.primary || '#3B82F6')}" onchange="portfolioData.theme=Object.assign({},portfolioData.theme,{primary:this.value})"></div><p style="color:#94A3B8;font-size:.9rem">Click Publish to apply to the live site.</p>`;
+  const t = portfolioData.theme || {}, an = portfolioData.anim || {};
+  const col = (k, l, d) => `<div class="form-group"><label>${l}</label><input type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(t[k]) ? t[k] : d)}" onchange="setTheme('${k}',this.value)"></div>`;
+  const font = (k, l, d) => `<div class="form-group"><label>${l}</label><select onchange="setTheme('${k}',this.value)">${FONT_LIST.map(f => `<option ${(t[k] || d) === f ? 'selected' : ''}>${f}</option>`).join('')}</select></div>`;
+  const tog = (k, l) => `<label style="display:flex;gap:.6rem;align-items:center;margin:.5rem 0"><input type="checkbox" ${an[k] === false ? '' : 'checked'} onchange="setAnim('${k}',this.checked)"> ${l}</label>`;
+  return `<h3>Design</h3><h4>Colours</h4>${col('primary','Main accent','#3B82F6')}${col('secondary','Secondary accent','#7C3AED')}${col('accent','Third accent','#06B6D4')}
+    <h4>Fonts</h4>${font('headingFont','Heading font','Space Grotesk')}${font('bodyFont','Body font','Poppins')}
+    <div class="form-group"><label>Base text size: <b id="fsVal">${esc(t.fontSize || 16)}</b>px</label><input type="range" min="14" max="20" value="${esc(t.fontSize || 16)}" oninput="document.getElementById('fsVal').textContent=this.value" onchange="setTheme('fontSize',+this.value)"></div>
+    <h4>Animations &amp; effects</h4>${tog('cursor','Custom cursor')}${tog('aurora','Animated background glow')}${tog('loader','Loading screen')}${tog('typing','Typing effect in hero')}${tog('reveal','Scroll reveal animations')}${tog('motion','All other animations &amp; transitions')}
+    <h4>Section order</h4>${orderList().map((id, i) => `<div class="list-item" style="display:flex;align-items:center;gap:.6rem"><span>${i + 1}. ${SECTION_LABELS[id]}</span><span style="margin-left:auto;display:flex;gap:.4rem"><button class="add-btn" style="margin:0" onclick="moveSection(${i},-1)">↑</button><button class="add-btn" style="margin:0" onclick="moveSection(${i},1)">↓</button></span></div>`).join('')}
+    <p style="color:#94A3B8;font-size:.9rem">Click <b>Publish</b> to apply to the live site.</p>`;
 }
 // ===== RESUME TAB =====
 function resumeHTML() {
