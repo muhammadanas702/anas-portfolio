@@ -17,7 +17,7 @@ const DEFAULT_DATA = {
       "AI & Tech Explorer"
     ],
     "description": "A passionate <strong>Software Engineering student</strong> at UMT, Lahore. I enjoy solving real‑world problems using programming and always strive to write clean, efficient, and maintainable code. My goal is to build a strong career in the software industry while specializing in <span class=\"highlight\">cybersecurity</span> and modern <span class=\"highlight\">software engineering</span> practices.",
-    "profileImage": ""
+    "profileImage": "assets/images/profile.jpg"
   },
   "socials": [
     {

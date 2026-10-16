@@ -41,26 +41,13 @@ function sanitizeHTML(html) {
     })(tpl.content);
     return tpl.innerHTML;
 }
-function readStored() { try { return localStorage.getItem('portfolioData'); } catch (e) { return null; } }
-function getStoredData() {
-    try { const d = JSON.parse(readStored() || '{}'); return (d && typeof d === 'object' && !Array.isArray(d)) ? d : {}; } catch (e) { return {}; }
-}
+function getStoredData() { return PORTFOLIO_DATA || {}; }
 
 // ===== ADMIN DATA SYNC =====
 let PORTFOLIO_DATA = null;
 
-// Check if admin data exists in localStorage
-(function loadAdminData() {
-    const stored = readStored();
-    if (stored) {
-        try {
-            const parsed = JSON.parse(stored);
-            PORTFOLIO_DATA = (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : null;
-        } catch (e) {
-            PORTFOLIO_DATA = null;
-        }
-    }
-})();
+// Content comes from data.json (fetched below), so edits are the same for every visitor.
+
 
 // ===== FALLBACK CONFIG (used if no admin data) =====
 const CONFIG = (Array.isArray(PORTFOLIO_DATA?.hero?.typingWords) && PORTFOLIO_DATA.hero.typingWords.length) ? {
@@ -103,10 +90,12 @@ let magneticBtns = document.querySelectorAll('[data-magnetic]');
 // ===== ADMIN REBUILD FUNCTIONS =====
 function rebuildAllSections() {
     if (!PORTFOLIO_DATA) return;
+    const D = Object.assign({}, PORTFOLIO_DATA);
+    ['socials','about','skills','education','projects','experience','certifications','achievements'].forEach(k => { if (Array.isArray(D[k])) D[k] = D[k].filter(x => x && !x.hidden); });
 
     // Hero Section
-    if (PORTFOLIO_DATA.hero) {
-        const h = PORTFOLIO_DATA.hero;
+    if (D.hero) {
+        const h = D.hero;
         const badgeEl = document.querySelector('.hero-badge');
         if (badgeEl) badgeEl.innerHTML = `<span class="badge-dot"></span> ${esc(h.badge || 'Available for Internships')}`;
         const greetingEl = document.querySelector('.hero-greeting');
@@ -130,9 +119,9 @@ function rebuildAllSections() {
     }
 
     // Social links update in hero and contact
-    if (PORTFOLIO_DATA.socials) {
+    if (D.socials) {
         document.querySelectorAll('.hero-socials, .contact-social-icons').forEach(container => {
-            container.innerHTML = PORTFOLIO_DATA.socials.map(s => {
+            container.innerHTML = D.socials.map(s => {
                 let icon = '';
                 switch(s.platform) {
                     case 'github': icon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>`; break;
@@ -146,7 +135,7 @@ function rebuildAllSections() {
     }
 
     // About Section
-    if (PORTFOLIO_DATA.about && PORTFOLIO_DATA.about.length > 0) {
+    if (D.about && D.about.length > 0) {
         const aboutGrid = document.querySelector('.about-grid');
         if (aboutGrid) {
             const icons = {
@@ -155,7 +144,7 @@ function rebuildAllSections() {
                 bolt: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
                 users: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`
             };
-            aboutGrid.innerHTML = PORTFOLIO_DATA.about.map(card => `
+            aboutGrid.innerHTML = D.about.map(card => `
                 <div class="about-card glass-card" data-reveal>
                     <div class="about-card-icon">${Object.prototype.hasOwnProperty.call(icons, card.icon) ? icons[card.icon] : icons.clock}</div>
                     <h3>${esc(card.title)}</h3>
@@ -166,10 +155,10 @@ function rebuildAllSections() {
     }
 
     // Skills Section
-    if (PORTFOLIO_DATA.skills && PORTFOLIO_DATA.skills.length > 0) {
+    if (D.skills && D.skills.length > 0) {
         const skillsGrid = document.querySelector('.skills-grid');
         if (skillsGrid) {
-            skillsGrid.innerHTML = PORTFOLIO_DATA.skills.map(skill => {
+            skillsGrid.innerHTML = D.skills.map(skill => {
                 const hex = safeColor(skill.color);
                 const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
                 return `
@@ -189,11 +178,11 @@ function rebuildAllSections() {
     }
 
     // Education Timeline
-    if (PORTFOLIO_DATA.education && PORTFOLIO_DATA.education.length > 0) {
+    if (D.education && D.education.length > 0) {
         const eduTimeline = document.querySelector('#education .timeline');
         if (eduTimeline) {
-            eduTimeline.innerHTML = PORTFOLIO_DATA.education.map((item, i) => {
-                const isLast = i === PORTFOLIO_DATA.education.length - 1;
+            eduTimeline.innerHTML = D.education.map((item, i) => {
+                const isLast = i === D.education.length - 1;
                 const badge = item.badge ? `<div class="timeline-badge">${esc(item.badge)}</div>` : '';
                 const tags = item.tags && item.tags.length > 0 ? `<div class="timeline-tags">${item.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '';
                 return `
@@ -216,10 +205,10 @@ function rebuildAllSections() {
     }
 
     // Projects Section
-    if (PORTFOLIO_DATA.projects && PORTFOLIO_DATA.projects.length > 0) {
+    if (D.projects && D.projects.length > 0) {
         const projectsGrid = document.querySelector('.projects-grid');
         if (projectsGrid) {
-            projectsGrid.innerHTML = PORTFOLIO_DATA.projects.map(project => {
+            projectsGrid.innerHTML = D.projects.map(project => {
                 const techTags = (project.tech || []).map(t => `<span>${esc(t)}</span>`).join('');
                 const githubLink = project.github ? `<a href="${esc(safeUrl(project.github))}" target="_blank" rel="noopener noreferrer" class="project-link github-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>GitHub</a>` : '';
                 const demoLink = project.demo ? `<a href="${esc(safeUrl(project.demo))}" target="_blank" rel="noopener noreferrer" class="project-link demo-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Live Demo</a>` : '';
@@ -250,11 +239,11 @@ function rebuildAllSections() {
     }
 
     // Experience Timeline
-    if (PORTFOLIO_DATA.experience && PORTFOLIO_DATA.experience.length > 0) {
+    if (D.experience && D.experience.length > 0) {
         const expTimeline = document.querySelector('#experience .timeline');
         if (expTimeline) {
-            expTimeline.innerHTML = PORTFOLIO_DATA.experience.map((item, i) => {
-                const isLast = i === PORTFOLIO_DATA.experience.length - 1;
+            expTimeline.innerHTML = D.experience.map((item, i) => {
+                const isLast = i === D.experience.length - 1;
                 const dotClass = item.isFuture ? 'timeline-dot-future' : (item.badge === 'Active' ? 'timeline-dot-active' : '');
                 const cardClass = item.isFuture ? 'timeline-card-future' : '';
                 const badgeHtml = item.badge ? `<div class="timeline-badge">${esc(item.badge)}</div>` : '';
@@ -279,13 +268,13 @@ function rebuildAllSections() {
     }
 
     // Certifications
-    if (PORTFOLIO_DATA.certifications !== undefined) {
+    if (D.certifications !== undefined) {
         const certsGrid = document.getElementById('certsGrid');
         if (certsGrid) {
-            if (PORTFOLIO_DATA.certifications.length === 0) {
+            if (D.certifications.length === 0) {
                 certsGrid.innerHTML = `<div class="cert-empty glass-card" data-reveal><div class="cert-empty-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><h3>Certifications Coming Soon</h3><p>I'm actively pursuing industry‑recognized certifications.</p></div>`;
             } else {
-                certsGrid.innerHTML = PORTFOLIO_DATA.certifications.map(cert => `
+                certsGrid.innerHTML = D.certifications.map(cert => `
                     <div class="cert-card glass-card" data-reveal style="text-align:center;">
                         ${safeImg(cert.image) ? `<img src="${esc(safeImg(cert.image))}" alt="${esc(cert.title)}" style="width:100%;max-width:200px;border-radius:12px;margin-bottom:1rem;">` : ''}
                         <h3>${esc(cert.title)}</h3>
@@ -298,13 +287,13 @@ function rebuildAllSections() {
     }
 
     // Achievements
-    if (PORTFOLIO_DATA.achievements !== undefined) {
+    if (D.achievements !== undefined) {
         const achievementsGrid = document.getElementById('achievementsGrid');
         if (achievementsGrid) {
-            if (PORTFOLIO_DATA.achievements.length === 0) {
+            if (D.achievements.length === 0) {
                 achievementsGrid.innerHTML = `<div class="achievement-empty glass-card" data-reveal><div class="achievement-empty-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><h3>Achievements Coming Soon</h3><p>Stay tuned for updates!</p></div>`;
             } else {
-                achievementsGrid.innerHTML = PORTFOLIO_DATA.achievements.map(ach => `
+                achievementsGrid.innerHTML = D.achievements.map(ach => `
                     <div class="achievement-card glass-card" data-reveal style="text-align:center;">
                         <h3>${esc(ach.title)}</h3>
                         <p style="color:#94A3B8;">${esc(ach.description)}</p>
@@ -316,19 +305,19 @@ function rebuildAllSections() {
     }
 
     // Contact Info
-    if (PORTFOLIO_DATA.email || PORTFOLIO_DATA.phone || PORTFOLIO_DATA.location) {
+    if (D.email || D.phone || D.location) {
         const contactInfoContainer = document.querySelector('#contact .contact-info');
-        if (contactInfoContainer && PORTFOLIO_DATA.email) {
+        if (contactInfoContainer && D.email) {
             const emailEl = contactInfoContainer.querySelector('.contact-info-card:nth-child(2) p');
-            if (emailEl) emailEl.textContent = PORTFOLIO_DATA.email;
+            if (emailEl) emailEl.textContent = D.email;
         }
-        if (contactInfoContainer && PORTFOLIO_DATA.phone) {
+        if (contactInfoContainer && D.phone) {
             const phoneEl = contactInfoContainer.querySelector('.contact-info-card:nth-child(3) p');
-            if (phoneEl) phoneEl.textContent = PORTFOLIO_DATA.phone;
+            if (phoneEl) phoneEl.textContent = D.phone;
         }
-        if (contactInfoContainer && PORTFOLIO_DATA.location) {
+        if (contactInfoContainer && D.location) {
             const locEl = contactInfoContainer.querySelector('.contact-info-card:first-child p');
-            if (locEl) locEl.textContent = PORTFOLIO_DATA.location;
+            if (locEl) locEl.textContent = D.location;
         }
     }
 
@@ -337,24 +326,38 @@ function rebuildAllSections() {
     skillProgressBars = document.querySelectorAll('.skill-progress-bar');
     magneticBtns = document.querySelectorAll('[data-magnetic]');
 
+    // Section visibility, theme colour, resume button
+    const sec = D.sections || {};
+    ['about','skills','education','projects','experience','certifications','achievements','contact'].forEach(id => {
+        const off = sec[id] === false;
+        const el = document.getElementById(id); if (el) el.hidden = off;
+        document.querySelectorAll('[data-section="' + id + '"], .footer-links a[href="#' + id + '"]').forEach(a => { (a.closest('li') || a).hidden = off; });
+    });
+    if (D.theme && /^#[0-9a-f]{6}$/i.test(D.theme.primary || '')) document.documentElement.style.setProperty('--primary-blue', D.theme.primary);
+    document.querySelectorAll('a[download]').forEach(a => {
+        a.hidden = D.resumeEnabled === false;
+        const sp = a.querySelector('span'); if (sp && D.resumeLabel) sp.textContent = String(D.resumeLabel).slice(0, 40);
+    });
+
     // Resume link set in admin
-    if (PORTFOLIO_DATA.resumeLink && /^(assets\/|https:\/\/|data:application\/pdf;base64,)/.test(PORTFOLIO_DATA.resumeLink)) {
-        document.querySelectorAll('a[download]').forEach(a => { a.href = PORTFOLIO_DATA.resumeLink; });
+    if (D.resumeLink && /^(assets\/|https:\/\/|data:application\/pdf;base64,)/.test(D.resumeLink)) {
+        document.querySelectorAll('a[download]').forEach(a => { a.href = D.resumeLink; });
     }
 }
 
+let revealObserver = null;
 function initScrollReveal() {
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('revealed');
-            }
-        });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-    revealElements.forEach(el => revealObserver.observe(el));
+    if (!revealObserver) {
+        revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('revealed'); });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    }
+    revealElements.forEach(el => { if (!el.dataset.rv) { el.dataset.rv = '1'; revealObserver.observe(el); } });
 }
 
+let skillsSeen = false;
 function initSkillProgress() {
+    if (skillsSeen) { document.querySelectorAll('.skill-progress-bar').forEach(bar => { bar.style.width = (bar.getAttribute('data-progress') || '0') + '%'; }); return; }
     const skillsSection = document.getElementById('skills');
     if (!skillsSection) return;
     const observer = new IntersectionObserver((entries) => {
@@ -364,6 +367,7 @@ function initSkillProgress() {
                     const progress = bar.getAttribute('data-progress') || '0';
                     bar.style.width = progress + '%';
                 });
+                skillsSeen = true;
                 observer.unobserve(entry.target);
             }
         });
@@ -405,6 +409,8 @@ function magneticLeave(e) {
 
 function initCursorHover() {
     document.querySelectorAll('a, button, .project-card, .skill-card, .about-card, input, textarea, .social-icon, .magnetic-btn, .hero-floating-card, .glass-card').forEach(el => {
+        if (el.dataset.ch) return;
+        el.dataset.ch = '1';
         el.addEventListener('mouseenter', () => {
             cursor.style.width = '50px';
             cursor.style.height = '50px';
@@ -424,19 +430,25 @@ function initCursorHover() {
 
 // ===== RUN REBUILD ON DOM READY =====
 document.addEventListener('DOMContentLoaded', () => {
-    rebuildAllSections(); // Apply admin data if available
-    // Re-init everything
-    initScrollReveal();
-    initSkillProgress();
-    initMagneticButtons();
-    initCursorHover();
+    revealElements = document.querySelectorAll('[data-reveal]');
+    magneticBtns = document.querySelectorAll('[data-magnetic]');
+    initScrollReveal(); initSkillProgress(); initMagneticButtons(); initCursorHover();
+    fetch('data.json?v=' + Date.now(), { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null).catch(() => null)
+        .then(d => {
+            if (!d || typeof d !== 'object' || Array.isArray(d)) return;
+            PORTFOLIO_DATA = d;
+            if (Array.isArray(d.hero && d.hero.typingWords) && d.hero.typingWords.length) CONFIG.typingWords = d.hero.typingWords.map(String);
+            rebuildAllSections();
+            initScrollReveal(); initSkillProgress(); initMagneticButtons(); initCursorHover();
+        });
 });
 
 // ===== LOADER =====
 function runLoader() {
     let progress = 0;
     const interval = setInterval(() => {
-        progress += Math.random() * 25;
+        progress += 20 + Math.random() * 30;
         if (progress >= 100) {
             progress = 100;
             clearInterval(interval);
@@ -444,10 +456,10 @@ function runLoader() {
             setTimeout(() => {
                 loader.classList.add('hidden');
                 document.body.style.overflow = '';
-            }, 400);
+            }, 150);
         }
         loaderBar.style.width = progress + '%';
-    }, 200);
+    }, 80);
 }
 if (document.readyState === 'complete') runLoader(); else window.addEventListener('load', runLoader);
 document.body.style.overflow = 'hidden';
@@ -566,16 +578,32 @@ const typingObserver = new MutationObserver(() => {
 typingObserver.observe(loader, { attributes: true, attributeFilter: ['class'] });
 
 // ===== CONTACT FORM =====
-if (contactForm) contactForm.addEventListener('submit', (e) => {
+if (contactForm) contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = new FormData(contactForm);
-    const to = (PORTFOLIO_DATA && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(PORTFOLIO_DATA.email || '')) ? PORTFOLIO_DATA.email : 'anasali2988@gmail.com';
+    if (f.get('botcheck')) return; // honeypot: bots fill this
+    const btn = contactForm.querySelector('button[type="submit"]');
+    const say = (m, ok) => { formFeedback.textContent = m; formFeedback.style.color = ok ? '#22c55e' : '#ff6b6b'; };
+    const key = PORTFOLIO_DATA && PORTFOLIO_DATA.contactKey;
     const subject = String(f.get('subject') || ('Portfolio message from ' + f.get('name'))).slice(0, 150);
-    const body = 'Name: ' + f.get('name') + '\nEmail: ' + f.get('email') + '\n\n' + f.get('message');
-    window.location.href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-    formFeedback.textContent = 'Opening your email app… if nothing opens, write to ' + to;
-    formFeedback.style.color = '#22c55e';
-    setTimeout(() => formFeedback.textContent = '', 6000);
+    if (key && /^[0-9a-f-]{20,}$/i.test(key)) {
+        btn.disabled = true; say('Sending…', true);
+        try {
+            const res = await fetch('https://api.web3forms.com/submit', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ access_key: key, name: f.get('name'), email: f.get('email'), subject: subject, message: f.get('message'), from_name: 'Portfolio Contact Form' })
+            });
+            const j = await res.json();
+            if (j.success) { say('Message sent! I will get back to you soon.', true); contactForm.reset(); }
+            else say('Could not send: ' + (j.message || 'please try again.'), false);
+        } catch (err) { say('Network error. Please try again or email me directly.', false); }
+        btn.disabled = false;
+    } else {
+        const to = (PORTFOLIO_DATA && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(PORTFOLIO_DATA.email || '')) ? PORTFOLIO_DATA.email : 'anasali2988@gmail.com';
+        window.location.href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent('Name: ' + f.get('name') + '\nEmail: ' + f.get('email') + '\n\n' + f.get('message'));
+        say('Opening your email app…', true);
+    }
+    setTimeout(() => { formFeedback.textContent = ''; }, 8000);
 });
 
 // ===== FOOTER YEAR =====
