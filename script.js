@@ -113,6 +113,16 @@ function applyDesign(D) {
     b.toggle('no-reveal', an.reveal === false); b.toggle('no-motion', an.motion === false);
     CONFIG.noTyping = an.typing === false;
     if (CONFIG.noTyping && typingText) typingText.textContent = CONFIG.typingWords[0] || '';
+    const L = D.layout || {}, num = (v, lo, hi, def) => { v = Number(v); return (v >= lo && v <= hi) ? v : def; };
+    root.style.setProperty('--card-radius', num(L.radius, 0, 40, 20) + 'px');
+    root.style.setProperty('--btn-radius', num(L.btnRadius, 0, 50, 50) + 'px');
+    root.style.setProperty('--card-padding', num(L.cardPadding, 0.8, 3, 2) + 'rem');
+    root.style.setProperty('--section-space', num(L.sectionSpace, 40, 200, 120) + 'px');
+    root.style.setProperty('--container-width', num(L.containerWidth, 960, 1600, 1200) + 'px');
+    root.style.setProperty('--skills-min', num(L.skillsMin, 200, 420, 280) + 'px');
+    root.style.setProperty('--projects-min', num(L.projectsMin, 280, 520, 350) + 'px');
+    root.style.setProperty('--about-min', num(L.aboutMin, 200, 380, 260) + 'px');
+    b.toggle('card-solid', L.cardStyle === 'solid'); b.toggle('card-outline', L.cardStyle === 'outline'); b.toggle('no-hover', an.hover === false);
     const ids = ['about', 'skills', 'education', 'projects', 'experience', 'certifications', 'achievements', 'contact'];
     const order = (Array.isArray(D.sectionOrder) ? D.sectionOrder : []).filter(i => ids.includes(i));
     ids.forEach(i => { if (!order.includes(i)) order.push(i); });

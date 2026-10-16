@@ -342,11 +342,11 @@ body {
 
 /* ===== SECTIONS GENERAL ===== */
 .section {
-    padding: 120px 2rem;
+    padding: var(--section-space, 120px) 2rem;
     position: relative;
 }
 .section-container {
-    max-width: 1200px;
+    max-width: var(--container-width, 1200px);
     margin: 0 auto;
 }
 .section-header {
@@ -553,7 +553,7 @@ body {
     align-items: center;
     gap: 0.6rem;
     padding: 0.9rem 2rem;
-    border-radius: 50px;
+    border-radius: var(--btn-radius, 50px);
     font-weight: 600;
     font-size: 0.95rem;
     text-decoration: none;
@@ -733,8 +733,8 @@ body {
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 2rem;
+    border-radius: var(--card-radius, 20px);
+    padding: var(--card-padding, 2rem);
     transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
 }
 .glass-card:hover {
@@ -746,7 +746,7 @@ body {
 /* ===== ABOUT SECTION ===== */
 .about-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--about-min, 260px), 100%), 1fr));
     gap: 2rem;
 }
 .about-card {
@@ -777,7 +777,7 @@ body {
 /* ===== SKILLS SECTION ===== */
 .skills-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--skills-min, 280px), 100%), 1fr));
     gap: 2rem;
 }
 .skill-card {
@@ -928,7 +928,7 @@ body {
 /* ===== PROJECTS ===== */
 .projects-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--projects-min, 350px), 100%), 1fr));
     gap: 2.5rem;
 }
 .project-card {
@@ -1421,3 +1421,7 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible, input:focu
 .no-loader .loader { display: none !important; }
 .no-reveal [data-reveal] { opacity: 1 !important; transform: none !important; }
 .no-motion *, .no-motion *::before, .no-motion *::after { animation: none !important; transition: none !important; }
+
+.card-solid .glass-card { background: var(--bg-secondary); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.card-outline .glass-card { background: transparent; border-color: var(--border-light); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.no-hover .glass-card:hover, .no-hover .project-card:hover { transform: none !important; }

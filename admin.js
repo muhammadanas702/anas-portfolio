@@ -124,7 +124,7 @@ async function loadData() {
   portfolioData.hero = Object.assign(clone(DEFAULT_DATA.hero), portfolioData.hero || {});
   if (!Array.isArray(portfolioData.hero.typingWords)) portfolioData.hero.typingWords = [];
   ['socials','about','skills','education','projects','experience','certifications','achievements'].forEach(k => { if (!Array.isArray(portfolioData[k])) portfolioData[k] = []; });
-  portfolioData.sections = portfolioData.sections || {}; portfolioData.theme = portfolioData.theme || {};
+  portfolioData.sections = portfolioData.sections || {}; portfolioData.theme = portfolioData.theme || {}; portfolioData.anim = portfolioData.anim || {}; portfolioData.layout = portfolioData.layout || {};
 }
 function persist() {
   try { localStorage.setItem('portfolioData', JSON.stringify(portfolioData)); return true; }
@@ -230,6 +230,14 @@ function moveSection(i, d) {
   if (j < 0 || j >= o.length) return;
   [o[i], o[j]] = [o[j], o[i]]; portfolioData.sectionOrder = o; renderTab('theme');
 }
+function setLayout(k, v) { portfolioData.layout = Object.assign({}, portfolioData.layout, { [k]: v }); }
+function layoutHTML() {
+  const L = portfolioData.layout || {};
+  const r = (k, l, min, max, step, def, u) => `<div class="form-group"><label>${l}: <b id="lv_${k}">${esc(L[k] ?? def)}</b>${u}</label><input type="range" min="${min}" max="${max}" step="${step}" value="${esc(L[k] ?? def)}" oninput="document.getElementById('lv_${k}').textContent=this.value" onchange="setLayout('${k}',+this.value)"></div>`;
+  return `<h4>Layout</h4>${r('radius','Card corner roundness',0,40,2,20,'px')}${r('btnRadius','Button roundness',0,50,2,50,'px')}${r('cardPadding','Card inner spacing',0.8,3,0.2,2,'rem')}${r('sectionSpace','Space between sections',40,200,10,120,'px')}${r('containerWidth','Content width',960,1600,40,1200,'px')}${r('skillsMin','Skill card width (smaller = more per row)',200,420,20,280,'px')}${r('projectsMin','Project card width',280,520,20,350,'px')}${r('aboutMin','About card width',200,380,20,260,'px')}
+    <div class="form-group"><label>Card style</label><select onchange="setLayout('cardStyle',this.value)">${['glass','solid','outline'].map(o => `<option ${(L.cardStyle || 'glass') === o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+    <button class="btn-secondary" onclick="if(confirm('Reset all design settings to defaults?')){portfolioData.theme={};portfolioData.anim={};portfolioData.layout={};portfolioData.sectionOrder=[];renderTab('theme')}">Reset design to defaults</button>`;
+}
 function themeHTML() {
   const t = portfolioData.theme || {}, an = portfolioData.anim || {};
   const col = (k, l, d) => `<div class="form-group"><label>${l}</label><input type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(t[k]) ? t[k] : d)}" onchange="setTheme('${k}',this.value)"></div>`;
@@ -238,7 +246,8 @@ function themeHTML() {
   return `<h3>Design</h3><h4>Colours</h4>${col('primary','Main accent','#3B82F6')}${col('secondary','Secondary accent','#7C3AED')}${col('accent','Third accent','#06B6D4')}
     <h4>Fonts</h4>${font('headingFont','Heading font','Space Grotesk')}${font('bodyFont','Body font','Poppins')}
     <div class="form-group"><label>Base text size: <b id="fsVal">${esc(t.fontSize || 16)}</b>px</label><input type="range" min="14" max="20" value="${esc(t.fontSize || 16)}" oninput="document.getElementById('fsVal').textContent=this.value" onchange="setTheme('fontSize',+this.value)"></div>
-    <h4>Animations &amp; effects</h4>${tog('cursor','Custom cursor')}${tog('aurora','Animated background glow')}${tog('loader','Loading screen')}${tog('typing','Typing effect in hero')}${tog('reveal','Scroll reveal animations')}${tog('motion','All other animations &amp; transitions')}
+    <h4>Animations &amp; effects</h4>${tog('cursor','Custom cursor')}${tog('aurora','Animated background glow')}${tog('loader','Loading screen')}${tog('typing','Typing effect in hero')}${tog('reveal','Scroll reveal animations')}${tog('motion','All other animations &amp; transitions')}${tog('hover','Card hover lift effect')}
+    ${layoutHTML()}
     <h4>Section order</h4>${orderList().map((id, i) => `<div class="list-item" style="display:flex;align-items:center;gap:.6rem"><span>${i + 1}. ${SECTION_LABELS[id]}</span><span style="margin-left:auto;display:flex;gap:.4rem"><button class="add-btn" style="margin:0" onclick="moveSection(${i},-1)">↑</button><button class="add-btn" style="margin:0" onclick="moveSection(${i},1)">↓</button></span></div>`).join('')}
     <p style="color:#94A3B8;font-size:.9rem">Click <b>Publish</b> to apply to the live site.</p>`;
 }

@@ -267,5 +267,6 @@
     "certifications",
     "achievements",
     "contact"
-  ]
+  ],
+  "layout": {}
 }
