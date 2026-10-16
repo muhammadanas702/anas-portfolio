@@ -32,7 +32,9 @@ async function checkPw(pw) {
   const [salt, h] = stored.split(':');
   return (await hashPw(pw, salt)).split(':')[1] === h;
 }
+const ADMIN_BUILD = '6';
 function initLogin() {
+  if (typeof DEFAULT_DATA === 'undefined') { document.getElementById('loginError').textContent = 'data.js did not load - re-upload data.js to GitHub and hard-refresh (Ctrl+Shift+R).'; return; }
   try { localStorage.removeItem('adminPassword'); } catch (e) {} // old insecure plaintext password / default "admin123"
   if (!window.crypto || !crypto.subtle) {
     document.getElementById('loginError').textContent = 'Secure context required: open this page over HTTPS (or localhost).';
@@ -46,6 +48,7 @@ function initLogin() {
 async function showDashboard() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('verLine').textContent = 'Manage your portfolio content · build ' + ADMIN_BUILD;
   await loadData();
   switchTab('sections');
 }
@@ -86,7 +89,7 @@ async function ghPut(path, contentB64, msg) {
   const g = await fetch(url + '?ref=' + encodeURIComponent(c.branch), { headers: h });
   if (g.ok) sha = (await g.json()).sha; else if (g.status !== 404) throw new Error('GitHub error ' + g.status + ' - check token, owner, repo and branch.');
   const r = await fetch(url, { method: 'PUT', headers: h, body: JSON.stringify({ message: msg, content: contentB64, branch: c.branch, sha }) });
-  if (!r.ok) throw new Error('GitHub error ' + r.status + ': ' + (((await r.json().catch(() => ({}))).message) || ''));
+  if (!r.ok) throw new Error('GitHub error ' + r.status + ': ' + (((await r.json().catch(() => ({}))).message) || '') + ((r.status === 403 || r.status === 404) ? ' - the token needs "Contents: Read and write" on this repo.' : ''));
 }
 async function publishData() {
   collectCurrentTab();
@@ -105,6 +108,24 @@ function saveGh() {
   localStorage.setItem(GH_KEY, JSON.stringify({ owner: v('ghOwner'), repo: v('ghRepo'), branch: v('ghBranch'), token: v('ghToken') || old.token }));
   alert('Saved in this browser.');
 }
+async function testGh() {
+  const c = ghCfg(), out = document.getElementById('ghTestResult');
+  const say = (m, ok) => { out.style.color = ok ? '#22c55e' : '#ff6b6b'; out.textContent = m; };
+  if (!c.token) return say('Save your token first.', false);
+  say('Checking…', true);
+  try {
+    const h = { Authorization: 'Bearer ' + c.token, Accept: 'application/vnd.github+json' };
+    const base = 'https://api.github.com/repos/' + encodeURIComponent(c.owner) + '/' + encodeURIComponent(c.repo);
+    const r = await fetch(base, { headers: h });
+    if (r.status === 401) return say('Token is invalid or expired - create a new one.', false);
+    if (r.status === 404) return say('Repo not found, or the token has no access to it. Check owner / repo name and the token\'s repository access.', false);
+    if (!r.ok) return say('GitHub error ' + r.status, false);
+    const j = await r.json();
+    const br = await fetch(base + '/branches/' + encodeURIComponent(c.branch), { headers: h });
+    if (!br.ok) return say('Branch "' + c.branch + '" not found. This repo\'s default branch is "' + j.default_branch + '".', false);
+    say('✅ Token works and the repo is reachable. (Write access is confirmed when you Publish - if that fails with 403, give the token "Contents: Read and write".)', true);
+  } catch (e) { say('Network error: ' + e.message, false); }
+}
 function connectHTML() {
   const c = ghCfg();
   return `<h3>Connect to GitHub (needed to Publish)</h3>
@@ -113,7 +134,7 @@ function connectHTML() {
     <div class="form-group"><label>Repository</label><input id="ghRepo" value="${esc(c.repo)}"></div>
     <div class="form-group"><label>Branch</label><input id="ghBranch" value="${esc(c.branch)}"></div>
     <div class="form-group"><label>Token ${c.token ? '(saved - leave empty to keep)' : ''}</label><input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_..."></div>
-    <button class="btn-primary" onclick="saveGh()">Save connection</button>
+    <button class="btn-primary" onclick="saveGh()">Save connection</button> <button class="btn-secondary" onclick="testGh()">Test connection</button><p id="ghTestResult" style="margin-top:.8rem"></p>
     <h3 style="margin-top:2rem">Inbox &amp; visitor stats (Supabase)</h3>
     <p style="color:#94A3B8;font-size:.9rem">Needed to save contact messages here and count visitors. After filling these, click <b>Publish</b> at the top.</p>
     <div class="form-group"><label>Project URL</label><input id="sbUrl" value="${esc((portfolioData.supabase || {}).url || '')}" placeholder="https://xxxx.supabase.co"></div>
