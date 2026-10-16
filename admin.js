@@ -1,10 +1,9 @@
 /* ============================================
    ADMIN PANEL – FULL WORKING VERSION
    ============================================ */
-const ADMIN_PASSWORD_KEY = 'adminPassword';
-const DEFAULT_PASSWORD = 'admin123';
-function getAdminPassword() { return localStorage.getItem(ADMIN_PASSWORD_KEY) || DEFAULT_PASSWORD; }
-
+const PW_KEY = 'adminPwHash';      // "salt:hash" (PBKDF2-SHA256) - never the plain password
+const SESSION_KEY = 'adminSession';
+let failedLogins = 0;
 let portfolioData = {};
 
 // ===== PREMIUM SVG ICONS =====
@@ -13,110 +12,116 @@ const I = {
   trash: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`
 };
 
-// ===== DEFAULT DATA =====
-const defaultData = {
-  name: "Muhammad Anas", email: "anasali2988@gmail.com", phone: "+92 347 3534323",
-  location: "Lahore, Punjab, Pakistan", resumeLink: "assets/resume/resume.pdf",
-  hero: {
-    badge: "Available for Internships", greeting: "Hi, I'm", firstName: "Muhammad",
-    lastName: "Anas", typingWords: ["Software Engineering Student","Cybersecurity Enthusiast","Problem Solver","AI & Tech Explorer"],
-    description: `A passionate <strong>Software Engineering student</strong> at UMT, Lahore...`,
-    profileImage: ""
-  },
-  socials: [
-    { platform: "github", url: "https://github.com/muhammadanas702" },
-    { platform: "linkedin", url: "https://www.linkedin.com/in/muhammad-anas-175828378" },
-    { platform: "x", url: "https://x.com/muhammadanas_20" },
-    { platform: "email", url: "mailto:anasali2988@gmail.com" }
-  ],
-  about: [
-    { icon: "clock", title: "My Mission", text: "To become a highly skilled Software Engineer..." },
-    { icon: "book", title: "Background", text: "I am Muhammad Anas..." },
-    { icon: "bolt", title: "Drive & Ambition", text: "I believe that continuous learning..." },
-    { icon: "users", title: "Personality", text: "I am a quick learner, detail‑oriented..." }
-  ],
-  skills: [
-    { name: "C", level: "Intermediate", color: "#A8B9CC", progress: 80, description: "Procedural programming..." },
-    { name: "C++", level: "Intermediate", color: "#00599C", progress: 75, description: "Object‑oriented..." },
-    { name: "Assembly (EMU8086)", level: "Intermediate", color: "#6E4C1E", progress: 70, description: "Low‑level programming..." },
-    { name: "SQL & MySQL", level: "Intermediate", color: "#4479A1", progress: 78, description: "Database design..." },
-    { name: "HTML5", level: "Advanced", color: "#E34F26", progress: 92, description: "Semantic markup..." },
-    { name: "CSS3", level: "Advanced", color: "#1572B6", progress: 88, description: "Advanced layouts..." },
-    { name: "JavaScript", level: "Learning", color: "#F7DF1E", progress: 30, description: "Currently strengthening..." },
-    { name: "Git & GitHub", level: "Intermediate", color: "#F05032", progress: 82, description: "Version control..." },
-    { name: "VS Code", level: "Advanced", color: "#007ACC", progress: 90, description: "Expert IDE usage..." }
-  ],
-  education: [
-    { start: "2024", end: "Present", title: "BS Software Engineering", institution: "UMT, Lahore", description: "Pursuing...", tags: ["Software Engineering","Cybersecurity","AI"], badge: "Current" },
-    { start: "2022", end: "2024", title: "Intermediate — Pre‑Medical", institution: "The Crescent College", description: "Score: 873/1200", tags: [], badge: "" },
-    { start: "2020", end: "2022", title: "Matriculation", institution: "Educational School System", description: "Score: 1002/1100", tags: [], badge: "" }
-  ],
-  projects: [
-    { title: "Student Management System", category: "System Programming", description: "CLI‑based C++...", tech: ["C++","File Handling","OOP"], github: "https://github.com/muhammadanas702/student-management", demo: "", imageStyle: "background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);", image: "" },
-    { title: "Library Database System", category: "Database", description: "MySQL database...", tech: ["SQL","MySQL"], github: "https://github.com/muhammadanas702/library-db", demo: "", imageStyle: "background: linear-gradient(135deg, #0d1b2a, #1b2838, #1a3a4a);", image: "" },
-    { title: "Assembly Programs", category: "Low‑Level", description: "EMU8086 programs...", tech: ["Assembly","EMU8086"], github: "https://github.com/muhammadanas702/assembly-programs", demo: "", imageStyle: "background: linear-gradient(135deg, #1a1a2e, #1a1a3e, #1e1e3e);", image: "" },
-    { title: "Portfolio Website", category: "Web Development", description: "This website...", tech: ["HTML5","CSS3","JavaScript"], github: "https://github.com/muhammadanas702/portfolio", demo: "#", imageStyle: "background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);", image: "" }
-  ],
-  experience: [
-    { start: "2024", end: "Present", title: "Software Engineering Student", institution: "UMT", description: "Currently pursuing...", tags: ["Programming","Problem Solving"], badge: "Active", isFuture: false },
-    { start: "Upcoming", end: "", title: "Future Internship", institution: "Open to Opportunities", description: "Eager to apply...", tags: ["Seeking Internship"], badge: "", isFuture: true }
-  ],
-  certifications: [],
-  achievements: []
-};
+// ===== HELPERS =====
+const clone = o => JSON.parse(JSON.stringify(o));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const hex = buf => [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, '0')).join('');
+function safeImgSrc(u) { u = String(u || ''); return (/^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(u) || /^(https:\/\/|assets\/)[^\s"'<>]*$/i.test(u)) ? u : ''; }
+function safeResume(u) { u = String(u || ''); return (/^data:application\/pdf;base64,[A-Za-z0-9+/=]+$/.test(u) || /^(https:\/\/|assets\/)[^\s"'<>]*$/i.test(u)) ? u : ''; }
 
-// ===== AUTH =====
-function login() {
-  if (document.getElementById('passwordInput').value === getAdminPassword()) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    loadData();
-    switchTab('hero');
-  } else {
-    document.getElementById('loginError').textContent = 'Incorrect password!';
-  }
+// ===== AUTH (client-side only - see README: this is a convenience lock, not real security) =====
+async function hashPw(pw, saltHex) {
+  const salt = saltHex ? Uint8Array.from(saltHex.match(/../g).map(h => parseInt(h, 16))) : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 150000, hash: 'SHA-256' }, key, 256);
+  return hex(salt) + ':' + hex(bits);
 }
-function logout() { localStorage.removeItem('adminLoggedIn'); location.reload(); }
-function previewPortfolio() { window.open('index.html', '_blank'); }
-function resetData() { if (confirm('Reset all data to default?')) { portfolioData = JSON.parse(JSON.stringify(defaultData)); saveAllData(); location.reload(); } }
+async function checkPw(pw) {
+  const stored = localStorage.getItem(PW_KEY);
+  if (!stored) return false;
+  const [salt, h] = stored.split(':');
+  return (await hashPw(pw, salt)).split(':')[1] === h;
+}
+function initLogin() {
+  try { localStorage.removeItem('adminPassword'); } catch (e) {} // old insecure plaintext password / default "admin123"
+  if (!window.crypto || !crypto.subtle) {
+    document.getElementById('loginError').textContent = 'Secure context required: open this page over HTTPS (or localhost).';
+    return;
+  }
+  const first = !localStorage.getItem(PW_KEY);
+  document.getElementById('loginTitle').textContent = first ? 'Create Admin Password' : 'Admin Login';
+  document.getElementById('loginHint').textContent = first ? 'First time here: choose a password (min 8 characters).' : 'Enter password to access dashboard';
+  if (sessionStorage.getItem(SESSION_KEY) === '1' && !first) showDashboard();
+}
+function showDashboard() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadData();
+  switchTab('hero');
+}
+async function login() {
+  const input = document.getElementById('passwordInput'), err = document.getElementById('loginError');
+  const pw = input.value;
+  if (!window.crypto || !crypto.subtle) return;
+  if (!localStorage.getItem(PW_KEY)) {
+    if (pw.length < 8) { err.textContent = 'Password must be at least 8 characters.'; return; }
+    localStorage.setItem(PW_KEY, await hashPw(pw));
+    sessionStorage.setItem(SESSION_KEY, '1'); input.value = ''; showDashboard(); return;
+  }
+  if (failedLogins) await sleep(Math.min(failedLogins * 1000, 8000)); // slow down guessing
+  if (await checkPw(pw)) { failedLogins = 0; sessionStorage.setItem(SESSION_KEY, '1'); input.value = ''; err.textContent = ''; showDashboard(); }
+  else { failedLogins++; err.textContent = 'Incorrect password!'; }
+}
+function logout() { sessionStorage.removeItem(SESSION_KEY); location.reload(); }
+function previewPortfolio() { window.open('index.html', '_blank', 'noopener'); }
+function resetData() {
+  if (!confirm('Reset all content to the defaults from data.js? Your saved edits will be lost.')) return;
+  try { localStorage.removeItem('portfolioData'); } catch (e) {}
+  location.reload();
+}
 
 // ===== DATA =====
 function loadData() {
-  const stored = localStorage.getItem('portfolioData');
-  portfolioData = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(defaultData));
+  const base = clone(DEFAULT_DATA);
+  try {
+    const d = JSON.parse(localStorage.getItem('portfolioData') || 'null');
+    portfolioData = (d && typeof d === 'object' && !Array.isArray(d)) ? Object.assign(base, d) : base;
+  } catch (e) { portfolioData = base; }
+  portfolioData.hero = Object.assign(clone(DEFAULT_DATA.hero), portfolioData.hero || {});
+  if (!Array.isArray(portfolioData.hero.typingWords)) portfolioData.hero.typingWords = [];
+  ['socials','about','skills','education','projects','experience','certifications','achievements'].forEach(k => { if (!Array.isArray(portfolioData[k])) portfolioData[k] = []; });
+}
+function persist() {
+  try { localStorage.setItem('portfolioData', JSON.stringify(portfolioData)); return true; }
+  catch (e) { alert('Could not save: browser storage is full or blocked. Use smaller images / PDF.'); return false; }
+}
+// Read whatever form fields of the CURRENT tab are on screen into portfolioData (so switching tabs never loses edits)
+function collectCurrentTab() {
+  const g = id => document.getElementById(id);
+  if (g('heroBadge')) {
+    const h = portfolioData.hero;
+    h.badge = g('heroBadge').value; h.greeting = g('heroGreeting').value;
+    h.firstName = g('heroFirstName').value; h.lastName = g('heroLastName').value;
+    h.typingWords = g('heroTypingWords').value.split(',').map(x => x.trim()).filter(Boolean);
+    h.description = g('heroDescription').value;
+    const img = g('heroProfileImage').value.trim();
+    if (img === '' || safeImgSrc(img)) h.profileImage = img;
+  }
+  if (g('contactEmail')) {
+    portfolioData.email = g('contactEmail').value.trim();
+    portfolioData.phone = g('contactPhone').value.trim();
+    portfolioData.location = g('contactLocation').value.trim();
+  }
+  if (g('resumeLink')) {
+    const r = g('resumeLink').value.trim();
+    if (safeResume(r)) portfolioData.resumeLink = r; else if (r) alert('Resume link must start with https:// or assets/ - keeping the previous value.');
+  }
 }
 function saveAllData() {
-  const hb = document.getElementById('heroBadge');
-  if (hb) {
-    portfolioData.hero.badge = hb.value;
-    portfolioData.hero.greeting = document.getElementById('heroGreeting').value;
-    portfolioData.hero.firstName = document.getElementById('heroFirstName').value;
-    portfolioData.hero.lastName = document.getElementById('heroLastName').value;
-    portfolioData.hero.typingWords = document.getElementById('heroTypingWords').value.split(',').map(s=>s.trim());
-    portfolioData.hero.description = document.getElementById('heroDescription').value;
-    portfolioData.hero.profileImage = document.getElementById('heroProfileImage').value;
-  }
-  const ce = document.getElementById('contactEmail');
-  if (ce) {
-    portfolioData.email = ce.value;
-    portfolioData.phone = document.getElementById('contactPhone').value;
-    portfolioData.location = document.getElementById('contactLocation').value;
-  }
-  const rl = document.getElementById('resumeLink');
-  if (rl) portfolioData.resumeLink = rl.value;
-  localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
-  alert('✅ All changes saved!');
+  collectCurrentTab();
+  if (persist()) alert('✅ Saved in this browser. (Visitors only see changes made on this same browser - see README.)');
 }
 
 // ===== TABS =====
 const tabs = ['hero','about','skills','education','projects','experience','certifications','achievements','contact','resume','settings'];
 function switchTab(tab) {
+  collectCurrentTab();
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab')[tabs.indexOf(tab)].classList.add('active');
   renderTab(tab);
 }
 
-function esc(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(str) { return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 function renderTab(tab) {
   const c = document.getElementById('tabContent');
@@ -133,23 +138,22 @@ function renderTab(tab) {
     case 'resume': c.innerHTML = resumeHTML(); break;
     case 'settings': c.innerHTML = settingsHTML(); break;
   }
-  refreshCursorHovers();
 }
 
 // ===== RENDER FUNCTIONS =====
-function heroHTML() { return `<h3>Hero Section</h3><div class="form-group"><label>Badge</label><input id="heroBadge" value="${esc(portfolioData.hero.badge)}"></div><div class="form-group"><label>Greeting</label><input id="heroGreeting" value="${esc(portfolioData.hero.greeting)}"></div><div class="form-group"><label>First Name</label><input id="heroFirstName" value="${esc(portfolioData.hero.firstName)}"></div><div class="form-group"><label>Last Name</label><input id="heroLastName" value="${esc(portfolioData.hero.lastName)}"></div><div class="form-group"><label>Typing Words (comma separated)</label><input id="heroTypingWords" value="${portfolioData.hero.typingWords.join(', ')}"></div><div class="form-group"><label>Description (HTML allowed)</label><textarea id="heroDescription">${esc(portfolioData.hero.description)}</textarea></div><div class="form-group"><label>Profile Image URL</label><input id="heroProfileImage" value="${esc(portfolioData.hero.profileImage||'')}" placeholder="Leave empty for initials"><input type="file" accept="image/*" onchange="uploadImage('heroProfileImage',this)" style="margin-top:0.5rem;"></div>${portfolioData.hero.profileImage?`<img src="${portfolioData.hero.profileImage}" class="preview-thumb">`:''}`; }
+function heroHTML() { return `<h3>Hero Section</h3><div class="form-group"><label>Badge</label><input id="heroBadge" value="${esc(portfolioData.hero.badge)}"></div><div class="form-group"><label>Greeting</label><input id="heroGreeting" value="${esc(portfolioData.hero.greeting)}"></div><div class="form-group"><label>First Name</label><input id="heroFirstName" value="${esc(portfolioData.hero.firstName)}"></div><div class="form-group"><label>Last Name</label><input id="heroLastName" value="${esc(portfolioData.hero.lastName)}"></div><div class="form-group"><label>Typing Words (comma separated)</label><input id="heroTypingWords" value="${esc(portfolioData.hero.typingWords.join(', '))}"></div><div class="form-group"><label>Description (HTML allowed)</label><textarea id="heroDescription">${esc(portfolioData.hero.description)}</textarea></div><div class="form-group"><label>Profile Image URL</label><input id="heroProfileImage" value="${esc(portfolioData.hero.profileImage||'')}" placeholder="Leave empty for initials"><input type="file" accept="image/*" onchange="uploadImage('heroProfileImage',this)" style="margin-top:0.5rem;"></div>${safeImgSrc(portfolioData.hero.profileImage)?`<img src="${esc(portfolioData.hero.profileImage)}" class="preview-thumb" alt="">`:''}`; }
 
 function contactHTML() { return `<h3>Contact Info</h3><div class="form-group"><label>Email</label><input id="contactEmail" value="${esc(portfolioData.email)}"></div><div class="form-group"><label>Phone</label><input id="contactPhone" value="${esc(portfolioData.phone)}"></div><div class="form-group"><label>Location</label><input id="contactLocation" value="${esc(portfolioData.location)}"></div><h4>Social Links</h4><div id="socialsList">${portfolioData.socials.map((s,i)=>`<div class="list-item"><div class="form-group"><label>Platform</label><select onchange="portfolioData.socials[${i}].platform=this.value"><option ${s.platform==='github'?'selected':''}>github</option><option ${s.platform==='linkedin'?'selected':''}>linkedin</option><option ${s.platform==='x'?'selected':''}>x</option><option ${s.platform==='email'?'selected':''}>email</option></select></div><div class="form-group"><label>URL</label><input value="${esc(s.url)}" onchange="portfolioData.socials[${i}].url=this.value"></div><button class="remove-btn" onclick="portfolioData.socials.splice(${i},1);renderTab('contact')">${I.trash}</button></div>`).join('')}</div><button class="add-btn" onclick="portfolioData.socials.push({platform:'github',url:''});renderTab('contact')">${I.plus} Add Social</button>`; }
 
-function skillsHTML() { return `<h3>Skills</h3>${portfolioData.skills.map((sk,i)=>`<div class="list-item"><div class="form-group"><label>Name</label><input value="${esc(sk.name)}" onchange="portfolioData.skills[${i}].name=this.value"></div><div class="form-group"><label>Level</label><input value="${esc(sk.level)}" onchange="portfolioData.skills[${i}].level=this.value"></div><div class="form-group"><label>Color (hex)</label><input value="${esc(sk.color)}" onchange="portfolioData.skills[${i}].color=this.value"></div><div class="form-group"><label>Progress (0-100)</label><input type="number" value="${sk.progress}" onchange="portfolioData.skills[${i}].progress=+this.value"></div><div class="form-group"><label>Description</label><textarea onchange="portfolioData.skills[${i}].description=this.value">${esc(sk.description)}</textarea></div><button class="remove-btn" onclick="portfolioData.skills.splice(${i},1);renderTab('skills')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.skills.push({name:'',level:'Intermediate',color:'#3B82F6',progress:50,description:''});renderTab('skills')">${I.plus} Add Skill</button>`; }
+function skillsHTML() { return `<h3>Skills</h3>${portfolioData.skills.map((sk,i)=>`<div class="list-item"><div class="form-group"><label>Name</label><input value="${esc(sk.name)}" onchange="portfolioData.skills[${i}].name=this.value"></div><div class="form-group"><label>Level</label><input value="${esc(sk.level)}" onchange="portfolioData.skills[${i}].level=this.value"></div><div class="form-group"><label>Color (hex)</label><input value="${esc(sk.color)}" onchange="portfolioData.skills[${i}].color=/^#[0-9a-f]{6}$/i.test(this.value.trim())?this.value.trim():'#3B82F6'"></div><div class="form-group"><label>Progress (0-100)</label><input type="number" value="${esc(sk.progress)}" min="0" max="100" onchange="portfolioData.skills[${i}].progress=Math.max(0,Math.min(100,+this.value||0))"></div><div class="form-group"><label>Description</label><textarea onchange="portfolioData.skills[${i}].description=this.value">${esc(sk.description)}</textarea></div><button class="remove-btn" onclick="portfolioData.skills.splice(${i},1);renderTab('skills')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.skills.push({name:'',level:'Intermediate',color:'#3B82F6',progress:50,description:''});renderTab('skills')">${I.plus} Add Skill</button>`; }
 
-function projectsHTML() { return `<h3>Projects</h3>${portfolioData.projects.map((p,i)=>`<div class="list-item"><div class="form-group"><label>Title</label><input value="${esc(p.title)}" onchange="portfolioData.projects[${i}].title=this.value"></div><div class="form-group"><label>Category</label><input value="${esc(p.category)}" onchange="portfolioData.projects[${i}].category=this.value"></div><div class="form-group"><label>Description</label><textarea onchange="portfolioData.projects[${i}].description=this.value">${esc(p.description)}</textarea></div><div class="form-group"><label>Tech (comma separated)</label><input value="${(p.tech||[]).join(',')}" onchange="portfolioData.projects[${i}].tech=this.value.split(',').map(t=>t.trim())"></div><div class="form-group"><label>GitHub URL</label><input value="${esc(p.github||'')}" onchange="portfolioData.projects[${i}].github=this.value"></div><div class="form-group"><label>Demo URL</label><input value="${esc(p.demo||'')}" onchange="portfolioData.projects[${i}].demo=this.value"></div><div class="form-group"><label>Project Image</label><input type="file" accept="image/*" onchange="uploadImageToProject(${i},this)">${p.image?`<img src="${p.image}" class="preview-thumb">`:''}</div><button class="remove-btn" onclick="portfolioData.projects.splice(${i},1);renderTab('projects')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.projects.push({title:'',category:'',description:'',tech:[],github:'',demo:'',imageStyle:'',image:''});renderTab('projects')">${I.plus} Add Project</button>`; }
+function projectsHTML() { return `<h3>Projects</h3>${portfolioData.projects.map((p,i)=>`<div class="list-item"><div class="form-group"><label>Title</label><input value="${esc(p.title)}" onchange="portfolioData.projects[${i}].title=this.value"></div><div class="form-group"><label>Category</label><input value="${esc(p.category)}" onchange="portfolioData.projects[${i}].category=this.value"></div><div class="form-group"><label>Description</label><textarea onchange="portfolioData.projects[${i}].description=this.value">${esc(p.description)}</textarea></div><div class="form-group"><label>Tech (comma separated)</label><input value="${esc((p.tech||[]).join(','))}" onchange="portfolioData.projects[${i}].tech=this.value.split(',').map(t=>t.trim()).filter(Boolean)"></div><div class="form-group"><label>GitHub URL</label><input value="${esc(p.github||'')}" onchange="portfolioData.projects[${i}].github=this.value"></div><div class="form-group"><label>Demo URL</label><input value="${esc(p.demo||'')}" onchange="portfolioData.projects[${i}].demo=this.value"></div><div class="form-group"><label>Project Image</label><input type="file" accept="image/*" onchange="uploadImageToProject(${i},this)">${safeImgSrc(p.image)?`<img src="${esc(p.image)}" class="preview-thumb" alt="">`:''}</div><button class="remove-btn" onclick="portfolioData.projects.splice(${i},1);renderTab('projects')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.projects.push({title:'',category:'',description:'',tech:[],github:'',demo:'',imageStyle:'',image:''});renderTab('projects')">${I.plus} Add Project</button>`; }
 
-function educationHTML() { return `<h3>Education</h3>${portfolioData.education.map((e,i)=>`<div class="list-item"><div class="form-group"><label>Start</label><input value="${esc(e.start)}" onchange="portfolioData.education[${i}].start=this.value"></div><div class="form-group"><label>End</label><input value="${esc(e.end)}" onchange="portfolioData.education[${i}].end=this.value"></div><div class="form-group"><label>Title</label><input value="${esc(e.title)}" onchange="portfolioData.education[${i}].title=this.value"></div><div class="form-group"><label>Institution</label><input value="${esc(e.institution)}" onchange="portfolioData.education[${i}].institution=this.value"></div><div class="form-group"><label>Description</label><textarea onchange="portfolioData.education[${i}].description=this.value">${esc(e.description)}</textarea></div><div class="form-group"><label>Tags (comma)</label><input value="${(e.tags||[]).join(',')}" onchange="portfolioData.education[${i}].tags=this.value.split(',').map(t=>t.trim())"></div><div class="form-group"><label>Badge</label><input value="${esc(e.badge||'')}" onchange="portfolioData.education[${i}].badge=this.value"></div><button class="remove-btn" onclick="portfolioData.education.splice(${i},1);renderTab('education')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.education.push({start:'',end:'',title:'',institution:'',description:'',tags:[],badge:''});renderTab('education')">${I.plus} Add Education</button>`; }
+function educationHTML() { return `<h3>Education</h3>${portfolioData.education.map((e,i)=>`<div class="list-item"><div class="form-group"><label>Start</label><input value="${esc(e.start)}" onchange="portfolioData.education[${i}].start=this.value"></div><div class="form-group"><label>End</label><input value="${esc(e.end)}" onchange="portfolioData.education[${i}].end=this.value"></div><div class="form-group"><label>Title</label><input value="${esc(e.title)}" onchange="portfolioData.education[${i}].title=this.value"></div><div class="form-group"><label>Institution</label><input value="${esc(e.institution)}" onchange="portfolioData.education[${i}].institution=this.value"></div><div class="form-group"><label>Description</label><textarea onchange="portfolioData.education[${i}].description=this.value">${esc(e.description)}</textarea></div><div class="form-group"><label>Tags (comma)</label><input value="${esc((e.tags||[]).join(','))}" onchange="portfolioData.education[${i}].tags=this.value.split(',').map(t=>t.trim()).filter(Boolean)"></div><div class="form-group"><label>Badge</label><input value="${esc(e.badge||'')}" onchange="portfolioData.education[${i}].badge=this.value"></div><button class="remove-btn" onclick="portfolioData.education.splice(${i},1);renderTab('education')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.education.push({start:'',end:'',title:'',institution:'',description:'',tags:[],badge:''});renderTab('education')">${I.plus} Add Education</button>`; }
 
-function experienceHTML() { return `<h3>Experience</h3>${portfolioData.experience.map((e,i)=>`<div class="list-item"><div class="form-group"><label>Start</label><input value="${esc(e.start)}" onchange="portfolioData.experience[${i}].start=this.value"></div><div class="form-group"><label>End</label><input value="${esc(e.end)}" onchange="portfolioData.experience[${i}].end=this.value"></div><div class="form-group"><label>Title</label><input value="${esc(e.title)}" onchange="portfolioData.experience[${i}].title=this.value"></div><div class="form-group"><label>Institution</label><input value="${esc(e.institution)}" onchange="portfolioData.experience[${i}].institution=this.value"></div><div class="form-group"><label>Description</label><textarea onchange="portfolioData.experience[${i}].description=this.value">${esc(e.description)}</textarea></div><div class="form-group"><label>Tags (comma)</label><input value="${(e.tags||[]).join(',')}" onchange="portfolioData.experience[${i}].tags=this.value.split(',').map(t=>t.trim())"></div><div class="form-group"><label>Badge</label><input value="${esc(e.badge||'')}" onchange="portfolioData.experience[${i}].badge=this.value"></div><label style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;"><input type="checkbox" ${e.isFuture?'checked':''} onchange="portfolioData.experience[${i}].isFuture=this.checked"> Future Entry</label><button class="remove-btn" onclick="portfolioData.experience.splice(${i},1);renderTab('experience')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.experience.push({start:'',end:'',title:'',institution:'',description:'',tags:[],badge:'',isFuture:false});renderTab('experience')">${I.plus} Add Experience</button>`; }
+function experienceHTML() { return `<h3>Experience</h3>${portfolioData.experience.map((e,i)=>`<div class="list-item"><div class="form-group"><label>Start</label><input value="${esc(e.start)}" onchange="portfolioData.experience[${i}].start=this.value"></div><div class="form-group"><label>End</label><input value="${esc(e.end)}" onchange="portfolioData.experience[${i}].end=this.value"></div><div class="form-group"><label>Title</label><input value="${esc(e.title)}" onchange="portfolioData.experience[${i}].title=this.value"></div><div class="form-group"><label>Institution</label><input value="${esc(e.institution)}" onchange="portfolioData.experience[${i}].institution=this.value"></div><div class="form-group"><label>Description</label><textarea onchange="portfolioData.experience[${i}].description=this.value">${esc(e.description)}</textarea></div><div class="form-group"><label>Tags (comma)</label><input value="${esc((e.tags||[]).join(','))}" onchange="portfolioData.experience[${i}].tags=this.value.split(',').map(t=>t.trim()).filter(Boolean)"></div><div class="form-group"><label>Badge</label><input value="${esc(e.badge||'')}" onchange="portfolioData.experience[${i}].badge=this.value"></div><label style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;"><input type="checkbox" ${e.isFuture?'checked':''} onchange="portfolioData.experience[${i}].isFuture=this.checked"> Future Entry</label><button class="remove-btn" onclick="portfolioData.experience.splice(${i},1);renderTab('experience')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.experience.push({start:'',end:'',title:'',institution:'',description:'',tags:[],badge:'',isFuture:false});renderTab('experience')">${I.plus} Add Experience</button>`; }
 
-function certificationsHTML() { return `<h3>Certifications</h3>${(portfolioData.certifications||[]).map((c,i)=>`<div class="list-item"><div class="form-group"><label>Title</label><input value="${esc(c.title||'')}" onchange="portfolioData.certifications[${i}].title=this.value"></div><div class="form-group"><label>Issuer</label><input value="${esc(c.issuer||'')}" onchange="portfolioData.certifications[${i}].issuer=this.value"></div><div class="form-group"><label>Date</label><input value="${esc(c.date||'')}" onchange="portfolioData.certifications[${i}].date=this.value"></div><div class="form-group"><label>Image</label><input type="file" accept="image/*" onchange="uploadImageToCert(${i},this)">${c.image?`<img src="${c.image}" class="preview-thumb">`:''}</div><button class="remove-btn" onclick="portfolioData.certifications.splice(${i},1);renderTab('certifications')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.certifications.push({title:'',issuer:'',date:'',image:''});renderTab('certifications')">${I.plus} Add Certification</button>`; }
+function certificationsHTML() { return `<h3>Certifications</h3>${(portfolioData.certifications||[]).map((c,i)=>`<div class="list-item"><div class="form-group"><label>Title</label><input value="${esc(c.title||'')}" onchange="portfolioData.certifications[${i}].title=this.value"></div><div class="form-group"><label>Issuer</label><input value="${esc(c.issuer||'')}" onchange="portfolioData.certifications[${i}].issuer=this.value"></div><div class="form-group"><label>Date</label><input value="${esc(c.date||'')}" onchange="portfolioData.certifications[${i}].date=this.value"></div><div class="form-group"><label>Image</label><input type="file" accept="image/*" onchange="uploadImageToCert(${i},this)">${safeImgSrc(c.image)?`<img src="${esc(c.image)}" class="preview-thumb" alt="">`:''}</div><button class="remove-btn" onclick="portfolioData.certifications.splice(${i},1);renderTab('certifications')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.certifications.push({title:'',issuer:'',date:'',image:''});renderTab('certifications')">${I.plus} Add Certification</button>`; }
 
 function achievementsHTML() { return `<h3>Achievements</h3>${(portfolioData.achievements||[]).map((a,i)=>`<div class="list-item"><div class="form-group"><label>Title</label><input value="${esc(a.title||'')}" onchange="portfolioData.achievements[${i}].title=this.value"></div><div class="form-group"><label>Description</label><textarea onchange="portfolioData.achievements[${i}].description=this.value">${esc(a.description||'')}</textarea></div><div class="form-group"><label>Date</label><input value="${esc(a.date||'')}" onchange="portfolioData.achievements[${i}].date=this.value"></div><button class="remove-btn" onclick="portfolioData.achievements.splice(${i},1);renderTab('achievements')">${I.trash}</button></div>`).join('')}<button class="add-btn" onclick="portfolioData.achievements.push({title:'',description:'',date:''});renderTab('achievements')">${I.plus} Add Achievement</button>`; }
 
@@ -163,32 +167,26 @@ function resumeHTML() {
   return `<h3>Resume / CV</h3>
     <div class="form-group">
       <label>Resume Link (URL or base64)</label>
-      <input id="resumeLink" value="${esc(portfolioData.resumeLink || 'assets/resume/resume.pdf')}">
+      <input id="resumeLink" value="${esc(portfolioData.resumeLink && !portfolioData.resumeLink.startsWith('data:') ? portfolioData.resumeLink : (portfolioData.resumeLink ? '(uploaded PDF stored in this browser)' : 'assets/resume/resume.pdf'))}">
     </div>
     <div class="form-group">
       <label>Upload PDF (max 2MB recommended)</label>
       <input type="file" accept=".pdf" onchange="uploadResume(this)">
     </div>
     <p style="color:#94A3B8; font-size:0.85rem;">If you upload a PDF, it will be stored as base64 in your browser's localStorage. This means it will only work on this device/browser.</p>
-    ${portfolioData.resumeLink && !portfolioData.resumeLink.startsWith('data:') ? `<iframe src="${portfolioData.resumeLink}" width="100%" height="400px" style="border:none; border-radius:10px; margin-top:1rem;"></iframe>` : ''}`;
+    ${safeResume(portfolioData.resumeLink) && !portfolioData.resumeLink.startsWith('data:') ? `<iframe src="${esc(safeResume(portfolioData.resumeLink))}" width="100%" height="400px" style="border:none; border-radius:10px; margin-top:1rem;"></iframe>` : ''}`;
 }
 
 function uploadResume(input) {
   const file = input.files[0];
-  if (!file || file.type !== 'application/pdf') {
-    alert('Please select a valid PDF file.');
-    return;
-  }
-  if (file.size > 3 * 1024 * 1024) {
-    alert('File size exceeds 3MB. Please use a smaller file.');
-    return;
-  }
+  if (!file) return;
+  if (file.type !== 'application/pdf') { alert('Please select a valid PDF file.'); input.value = ''; return; }
+  if (file.size > 2 * 1024 * 1024) { alert('File is larger than 2MB. Please use a smaller PDF (browser storage is limited).'); input.value = ''; return; }
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = e => {
+    collectCurrentTab();
     portfolioData.resumeLink = e.target.result;
-    localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
-    renderTab('resume');
-    alert('Resume uploaded successfully! Don\'t forget to click "Save All".');
+    if (persist()) { renderTab('resume'); alert('Resume uploaded and saved in this browser.'); }
   };
   reader.readAsDataURL(file);
 }
@@ -202,105 +200,69 @@ function settingsHTML() {
     <button class="btn-primary" onclick="changePassword()">Change Password</button>
     <p id="settingsFeedback" style="margin-top:1rem;"></p>`;
 }
-function changePassword() {
-  const current = document.getElementById('currentPassword').value;
-  const newPass = document.getElementById('newPassword').value;
-  const confirm = document.getElementById('confirmPassword').value;
-  const feedback = document.getElementById('settingsFeedback');
-  if (current !== getAdminPassword()) { feedback.style.color='#ff6b6b'; feedback.textContent='Current password is incorrect.'; return; }
-  if (!newPass || newPass.length<4) { feedback.style.color='#ff6b6b'; feedback.textContent='New password must be at least 4 characters.'; return; }
-  if (newPass !== confirm) { feedback.style.color='#ff6b6b'; feedback.textContent='Passwords do not match.'; return; }
-  localStorage.setItem(ADMIN_PASSWORD_KEY, newPass);
-  feedback.style.color='#22c55e'; feedback.textContent='Password changed successfully!';
-  document.getElementById('currentPassword').value = document.getElementById('newPassword').value = document.getElementById('confirmPassword').value = '';
+async function changePassword() {
+  const v = id => document.getElementById(id).value, fb = document.getElementById('settingsFeedback');
+  const bad = m => { fb.style.color = '#ff6b6b'; fb.textContent = m; };
+  if (!(await checkPw(v('currentPassword')))) return bad('Current password is incorrect.');
+  if (v('newPassword').length < 8) return bad('New password must be at least 8 characters.');
+  if (v('newPassword') !== v('confirmPassword')) return bad('Passwords do not match.');
+  localStorage.setItem(PW_KEY, await hashPw(v('newPassword')));
+  fb.style.color = '#22c55e'; fb.textContent = 'Password changed successfully!';
+  ['currentPassword','newPassword','confirmPassword'].forEach(id => document.getElementById(id).value = '');
 }
 
-// ===== IMAGE UPLOAD HELPERS =====
+// ===== IMAGE UPLOAD HELPERS (validated + downscaled so localStorage does not overflow) =====
+function readImage(file, cb) {
+  if (!file) return;
+  if (!/^image\/(png|jpe?g|gif|webp)$/.test(file.type)) { alert('Please choose a PNG, JPG, GIF or WebP image.'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 900 / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      cb(cv.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => alert('Could not read that image.');
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 function uploadImage(fieldId, input) {
-  const file = input.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => { document.getElementById(fieldId).value = e.target.result; portfolioData.hero.profileImage = e.target.result; renderTab('hero'); };
-  reader.readAsDataURL(file);
+  readImage(input.files[0], data => { collectCurrentTab(); portfolioData.hero.profileImage = data; renderTab('hero'); });
 }
-function uploadImageToProject(index, input) {
-  const file = input.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => { portfolioData.projects[index].image = e.target.result; renderTab('projects'); };
-  reader.readAsDataURL(file);
-}
-function uploadImageToCert(index, input) {
-  const file = input.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => { portfolioData.certifications[index].image = e.target.result; renderTab('certifications'); };
-  reader.readAsDataURL(file);
-}
+function uploadImageToProject(index, input) { readImage(input.files[0], data => { portfolioData.projects[index].image = data; renderTab('projects'); }); }
+function uploadImageToCert(index, input) { readImage(input.files[0], data => { portfolioData.certifications[index].image = data; renderTab('certifications'); }); }
 
-// ===== SUPER RESPONSIVE CURSOR =====
-const c = document.getElementById('cursor');
-const cd = document.getElementById('cursorDot');
-const mg = document.getElementById('mouseGlow');
-let mx=0, my=0, cx=0, cy=0, dx=0, dy=0;
-
-document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
-
-(function anim() {
-  cx += (mx - cx) * 0.5;
-  cy += (my - cy) * 0.5;
-  c.style.left = cx+'px';
-  c.style.top = cy+'px';
-  dx += (mx - dx) * 0.8;
-  dy += (my - dy) * 0.8;
-  cd.style.left = dx+'px';
-  cd.style.top = dy+'px';
-  mg.style.left = mx+'px';
-  mg.style.top = my+'px';
-  requestAnimationFrame(anim);
-})();
-
-document.addEventListener('mousedown', () => {
-  c.style.transform = 'translate(-50%, -50%) scale(0.8)';
-  cd.style.transform = 'translate(-50%, -50%) scale(1.2)';
-});
-document.addEventListener('mouseup', () => {
-  c.style.transform = 'translate(-50%, -50%) scale(1)';
-  cd.style.transform = 'translate(-50%, -50%) scale(1)';
-});
-
-function applyMagnetic() {
-  document.querySelectorAll('.btn-primary, .btn-save, .btn-danger, .btn-logout, .btn-secondary, .add-btn, .remove-btn, .tab').forEach(btn => {
-    btn.addEventListener('mousemove', e => {
-      const rect = btn.getBoundingClientRect();
-      btn.style.transform = `translate(${(e.clientX-rect.left-rect.width/2)*0.25}px, ${(e.clientY-rect.top-rect.height/2)*0.25}px)`;
-      c.style.width='44px'; c.style.height='44px'; c.style.borderColor='var(--primary-blue)';
-      cd.style.width='12px'; cd.style.height='12px'; cd.style.background='white';
-    });
-    btn.addEventListener('mouseleave', () => {
-      btn.style.transform = '';
-      c.style.width='32px'; c.style.height='32px'; c.style.borderColor='rgba(255,255,255,0.6)';
-      cd.style.width='8px'; cd.style.height='8px'; cd.style.background='var(--primary-blue)';
-    });
+// ===== CURSOR + MAGNETIC EFFECT (one delegated set of listeners, fine pointers only) =====
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  const cur = document.getElementById('cursor'), dot = document.getElementById('cursorDot'), glow = document.getElementById('mouseGlow');
+  let mx = 0, my = 0, cx = 0, cy = 0, dx = 0, dy = 0;
+  const HOVER = 'a, button, input, textarea, select, .tab, .list-item';
+  const MAGNET = '.btn-primary, .btn-save, .btn-danger, .btn-logout, .btn-secondary, .add-btn, .remove-btn, .tab';
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    const m = e.target.closest && e.target.closest(MAGNET);
+    if (m) { const r = m.getBoundingClientRect(); m.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.25}px, ${(e.clientY - r.top - r.height / 2) * 0.25}px)`; }
   });
-}
-
-function refreshCursorHovers() {
-  document.querySelectorAll('a, button, input, textarea, select, .glass-card, .list-item, .tab').forEach(el => {
-    el.addEventListener('mouseenter', () => {
-      c.style.width='48px'; c.style.height='48px'; c.style.borderColor='var(--primary-blue)';
-      cd.style.width='12px'; cd.style.height='12px';
-    });
-    el.addEventListener('mouseleave', () => {
-      c.style.width='32px'; c.style.height='32px'; c.style.borderColor='rgba(255,255,255,0.6)';
-      cd.style.width='8px'; cd.style.height='8px';
-    });
+  document.addEventListener('mouseover', e => {
+    if (e.target.closest && e.target.closest(HOVER)) { cur.style.width = cur.style.height = '48px'; cur.style.borderColor = 'var(--primary-blue)'; dot.style.width = dot.style.height = '12px'; }
   });
-  applyMagnetic();
+  document.addEventListener('mouseout', e => {
+    const m = e.target.closest && e.target.closest(MAGNET);
+    if (m && !m.contains(e.relatedTarget)) m.style.transform = '';
+    if (e.target.closest && e.target.closest(HOVER)) { cur.style.width = cur.style.height = '32px'; cur.style.borderColor = 'rgba(255,255,255,0.6)'; dot.style.width = dot.style.height = '8px'; }
+  });
+  document.addEventListener('mousedown', () => { cur.style.transform = 'translate(-50%, -50%) scale(0.8)'; dot.style.transform = 'translate(-50%, -50%) scale(1.2)'; });
+  document.addEventListener('mouseup', () => { cur.style.transform = 'translate(-50%, -50%) scale(1)'; dot.style.transform = 'translate(-50%, -50%) scale(1)'; });
+  (function anim() {
+    cx += (mx - cx) * 0.5; cy += (my - cy) * 0.5; dx += (mx - dx) * 0.8; dy += (my - dy) * 0.8;
+    cur.style.left = cx + 'px'; cur.style.top = cy + 'px'; dot.style.left = dx + 'px'; dot.style.top = dy + 'px';
+    glow.style.left = mx + 'px'; glow.style.top = my + 'px';
+    requestAnimationFrame(anim);
+  })();
 }
 
-document.addEventListener('DOMContentLoaded', () => { applyMagnetic(); refreshCursorHovers(); });
-const dashObserver = new MutationObserver(() => {
-  if (document.getElementById('dashboard').style.display === 'block') {
-    applyMagnetic();
-    refreshCursorHovers();
-  }
-});
-dashObserver.observe(document.getElementById('dashboard'), { attributes: true, attributeFilter: ['style'] });
+initLogin();

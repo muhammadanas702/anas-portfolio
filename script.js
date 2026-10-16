@@ -3,15 +3,59 @@
    Muhammad Anas - Software Engineering Student
    ============================================ */
 
+
+// ===== SAFETY HELPERS =====
+function esc(v) {
+    return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+// Only allow http(s), mailto, tel, in-page and relative URLs (blocks javascript:, data:text/html etc.)
+function safeUrl(u) {
+    const url = String(u ?? '').trim();
+    if (!url) return '#';
+    if (/^(https?:|mailto:|tel:|#|\.{0,2}\/)/i.test(url)) return url;
+    if (/^[\w\-./%]+$/.test(url) && !/^[a-z][a-z0-9+.-]*:/i.test(url)) return url;
+    return '#';
+}
+function safeImg(u) {
+    const url = String(u ?? '').trim();
+    return (/^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(url) || (/^(https:\/\/|assets\/)/i.test(url) && !/[\s"'<>]/.test(url))) ? url : '';
+}
+function safeColor(c) { return /^#[0-9a-f]{6}$/i.test(String(c)) ? c : '#3B82F6'; }
+function safeGradient(st) {
+    const d = 'background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);';
+    return /^background:\s*linear-gradient\([#0-9a-zA-Z\s,.%()-]+\);?$/.test(String(st || '').trim()) ? st : d;
+}
+// Minimal allow-list sanitizer for the "HTML allowed" hero description
+function sanitizeHTML(html) {
+    const allowed = { STRONG: 1, EM: 1, B: 1, I: 1, BR: 1, SPAN: 1 };
+    const tpl = document.createElement('template');
+    tpl.innerHTML = String(html ?? '');
+    (function clean(node) {
+        [...node.childNodes].forEach(ch => {
+            if (ch.nodeType === 1) {
+                if (!allowed[ch.tagName]) { ch.replaceWith(document.createTextNode(ch.textContent)); return; }
+                [...ch.attributes].forEach(a => { if (!(ch.tagName === 'SPAN' && a.name === 'class' && /^[\w -]+$/.test(a.value))) ch.removeAttribute(a.name); });
+                clean(ch);
+            } else if (ch.nodeType !== 3) ch.remove();
+        });
+    })(tpl.content);
+    return tpl.innerHTML;
+}
+function readStored() { try { return localStorage.getItem('portfolioData'); } catch (e) { return null; } }
+function getStoredData() {
+    try { const d = JSON.parse(readStored() || '{}'); return (d && typeof d === 'object' && !Array.isArray(d)) ? d : {}; } catch (e) { return {}; }
+}
+
 // ===== ADMIN DATA SYNC =====
 let PORTFOLIO_DATA = null;
 
 // Check if admin data exists in localStorage
 (function loadAdminData() {
-    const stored = localStorage.getItem('portfolioData');
+    const stored = readStored();
     if (stored) {
         try {
-            PORTFOLIO_DATA = JSON.parse(stored);
+            const parsed = JSON.parse(stored);
+            PORTFOLIO_DATA = (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : null;
         } catch (e) {
             PORTFOLIO_DATA = null;
         }
@@ -19,7 +63,7 @@ let PORTFOLIO_DATA = null;
 })();
 
 // ===== FALLBACK CONFIG (used if no admin data) =====
-const CONFIG = PORTFOLIO_DATA?.hero?.typingWords ? {
+const CONFIG = (Array.isArray(PORTFOLIO_DATA?.hero?.typingWords) && PORTFOLIO_DATA.hero.typingWords.length) ? {
     typingWords: PORTFOLIO_DATA.hero.typingWords,
     typingSpeed: 100,
     deletingSpeed: 50,
@@ -64,7 +108,7 @@ function rebuildAllSections() {
     if (PORTFOLIO_DATA.hero) {
         const h = PORTFOLIO_DATA.hero;
         const badgeEl = document.querySelector('.hero-badge');
-        if (badgeEl) badgeEl.innerHTML = `<span class="badge-dot"></span> ${h.badge || 'Available for Internships'}`;
+        if (badgeEl) badgeEl.innerHTML = `<span class="badge-dot"></span> ${esc(h.badge || 'Available for Internships')}`;
         const greetingEl = document.querySelector('.hero-greeting');
         if (greetingEl) greetingEl.textContent = h.greeting || "Hi, I'm";
         const firstNameEl = document.querySelector('.name-gradient');
@@ -72,13 +116,13 @@ function rebuildAllSections() {
         const lastNameEl = document.querySelector('.name-white');
         if (lastNameEl) lastNameEl.textContent = h.lastName || 'Anas';
         const descEl = document.querySelector('.hero-description');
-        if (descEl) descEl.innerHTML = h.description || '';
+        if (descEl) descEl.innerHTML = sanitizeHTML(h.description || '');
         if (typingText) typingText.textContent = '';
 
         const imgContainer = document.getElementById('heroProfileImage');
         if (imgContainer) {
-            if (h.profileImage) {
-                imgContainer.innerHTML = `<img src="${h.profileImage}" alt="Muhammad Anas" class="hero-profile-img">`;
+            if (safeImg(h.profileImage)) {
+                imgContainer.innerHTML = `<img src="${esc(safeImg(h.profileImage))}" alt="Muhammad Anas" class="hero-profile-img">`;
             } else {
                 imgContainer.innerHTML = `<div class="profile-avatar"><span class="profile-initials">MA</span></div>`;
             }
@@ -96,7 +140,7 @@ function rebuildAllSections() {
                     case 'x': icon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`; break;
                     case 'email': icon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4L12 13 2 4"/></svg>`; break;
                 }
-                return `<a href="${s.url}" target="_blank" rel="noopener noreferrer" class="social-icon magnetic-btn" data-magnetic aria-label="${s.platform}">${icon}</a>`;
+                return `<a href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener noreferrer" class="social-icon magnetic-btn" data-magnetic aria-label="${esc(s.platform)}">${icon}</a>`;
             }).join('');
         });
     }
@@ -113,9 +157,9 @@ function rebuildAllSections() {
             };
             aboutGrid.innerHTML = PORTFOLIO_DATA.about.map(card => `
                 <div class="about-card glass-card" data-reveal>
-                    <div class="about-card-icon">${icons[card.icon] || icons.clock}</div>
-                    <h3>${card.title}</h3>
-                    <p>${card.text}</p>
+                    <div class="about-card-icon">${Object.prototype.hasOwnProperty.call(icons, card.icon) ? icons[card.icon] : icons.clock}</div>
+                    <h3>${esc(card.title)}</h3>
+                    <p>${esc(card.text)}</p>
                 </div>
             `).join('');
         }
@@ -126,19 +170,19 @@ function rebuildAllSections() {
         const skillsGrid = document.querySelector('.skills-grid');
         if (skillsGrid) {
             skillsGrid.innerHTML = PORTFOLIO_DATA.skills.map(skill => {
-                const hex = skill.color || '#3B82F6';
+                const hex = safeColor(skill.color);
                 const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
                 return `
                 <div class="skill-card glass-card" data-reveal>
                     <div class="skill-header">
                         <div class="skill-icon" style="background: rgba(${r},${g},${b},0.15);">
-                            <span style="font-weight:bold;color:${hex};font-size:1.2rem;">${skill.name.substring(0,3)}</span>
+                            <span style="font-weight:bold;color:${hex};font-size:1.2rem;">${esc(String(skill.name || '').substring(0,3))}</span>
                         </div>
-                        <span class="skill-level">${skill.level}</span>
+                        <span class="skill-level">${esc(skill.level)}</span>
                     </div>
-                    <h3>${skill.name}</h3>
-                    <p>${skill.description}</p>
-                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="${skill.progress}" style="--progress-color: ${hex};"></div></div>
+                    <h3>${esc(skill.name)}</h3>
+                    <p>${esc(skill.description)}</p>
+                    <div class="skill-progress"><div class="skill-progress-bar" data-progress="${Math.max(0, Math.min(100, Number(skill.progress) || 0))}" style="--progress-color: ${hex};"></div></div>
                 </div>`;
             }).join('');
         }
@@ -150,8 +194,8 @@ function rebuildAllSections() {
         if (eduTimeline) {
             eduTimeline.innerHTML = PORTFOLIO_DATA.education.map((item, i) => {
                 const isLast = i === PORTFOLIO_DATA.education.length - 1;
-                const badge = item.badge ? `<div class="timeline-badge">${item.badge}</div>` : '';
-                const tags = item.tags && item.tags.length > 0 ? `<div class="timeline-tags">${item.tags.map(t => `<span>${t}</span>`).join('')}</div>` : '';
+                const badge = item.badge ? `<div class="timeline-badge">${esc(item.badge)}</div>` : '';
+                const tags = item.tags && item.tags.length > 0 ? `<div class="timeline-tags">${item.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '';
                 return `
                 <div class="timeline-item" data-reveal>
                     <div class="timeline-marker">
@@ -160,10 +204,10 @@ function rebuildAllSections() {
                     </div>
                     <div class="timeline-card glass-card">
                         ${badge}
-                        <span class="timeline-date">${item.start} — ${item.end}</span>
-                        <h3>${item.title}</h3>
-                        <p class="timeline-institution">${item.institution}</p>
-                        <p class="timeline-desc">${item.description}</p>
+                        <span class="timeline-date">${esc(item.start)} — ${esc(item.end)}</span>
+                        <h3>${esc(item.title)}</h3>
+                        <p class="timeline-institution">${esc(item.institution)}</p>
+                        <p class="timeline-desc">${esc(item.description)}</p>
                         ${tags}
                     </div>
                 </div>`;
@@ -176,24 +220,24 @@ function rebuildAllSections() {
         const projectsGrid = document.querySelector('.projects-grid');
         if (projectsGrid) {
             projectsGrid.innerHTML = PORTFOLIO_DATA.projects.map(project => {
-                const techTags = (project.tech || []).map(t => `<span>${t}</span>`).join('');
-                const githubLink = project.github ? `<a href="${project.github}" target="_blank" rel="noopener noreferrer" class="project-link github-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>GitHub</a>` : '';
-                const demoLink = project.demo ? `<a href="${project.demo}" class="project-link demo-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Live Demo</a>` : '';
-                const imageContent = project.image ? `<img src="${project.image}" alt="${project.title}" style="width:100%;height:100%;object-fit:cover;">` : `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`;
+                const techTags = (project.tech || []).map(t => `<span>${esc(t)}</span>`).join('');
+                const githubLink = project.github ? `<a href="${esc(safeUrl(project.github))}" target="_blank" rel="noopener noreferrer" class="project-link github-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>GitHub</a>` : '';
+                const demoLink = project.demo ? `<a href="${esc(safeUrl(project.demo))}" target="_blank" rel="noopener noreferrer" class="project-link demo-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Live Demo</a>` : '';
+                const imageContent = safeImg(project.image) ? `<img src="${esc(safeImg(project.image))}" alt="${esc(project.title)}" style="width:100%;height:100%;object-fit:cover;">` : `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`;
                 return `
                 <div class="project-card glass-card" data-reveal>
                     <div class="project-image-wrapper">
-                        <div class="project-image-placeholder" style="${project.imageStyle || 'background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);'}">
+                        <div class="project-image-placeholder" style="${esc(safeGradient(project.imageStyle))}">
                             ${imageContent}
                         </div>
                         <div class="project-image-overlay">
-                            <a href="${project.demo || project.github || '#'}" class="project-overlay-btn" aria-label="View Project">View Project</a>
+                            <a href="${esc(safeUrl(project.demo || project.github))}" target="_blank" rel="noopener noreferrer" class="project-overlay-btn" aria-label="View Project">View Project</a>
                         </div>
                     </div>
                     <div class="project-content">
-                        <span class="project-category">${project.category}</span>
-                        <h3>${project.title}</h3>
-                        <p>${project.description}</p>
+                        <span class="project-category">${esc(project.category)}</span>
+                        <h3>${esc(project.title)}</h3>
+                        <p>${esc(project.description)}</p>
                         <div class="project-tech">${techTags}</div>
                         <div class="project-links">
                             ${githubLink}
@@ -213,8 +257,8 @@ function rebuildAllSections() {
                 const isLast = i === PORTFOLIO_DATA.experience.length - 1;
                 const dotClass = item.isFuture ? 'timeline-dot-future' : (item.badge === 'Active' ? 'timeline-dot-active' : '');
                 const cardClass = item.isFuture ? 'timeline-card-future' : '';
-                const badgeHtml = item.badge ? `<div class="timeline-badge">${item.badge}</div>` : '';
-                const tagsHtml = item.tags && item.tags.length > 0 ? `<div class="timeline-tags">${item.tags.map(t => `<span>${t}</span>`).join('')}</div>` : '';
+                const badgeHtml = item.badge ? `<div class="timeline-badge">${esc(item.badge)}</div>` : '';
+                const tagsHtml = item.tags && item.tags.length > 0 ? `<div class="timeline-tags">${item.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '';
                 return `
                 <div class="timeline-item" data-reveal>
                     <div class="timeline-marker">
@@ -223,10 +267,10 @@ function rebuildAllSections() {
                     </div>
                     <div class="timeline-card glass-card ${cardClass}">
                         ${badgeHtml}
-                        <span class="timeline-date">${item.start} ${item.end ? '— ' + item.end : ''}</span>
-                        <h3>${item.title}</h3>
-                        <p class="timeline-institution">${item.institution}</p>
-                        <p class="timeline-desc">${item.description}</p>
+                        <span class="timeline-date">${esc(item.start)} ${item.end ? '— ' + esc(item.end) : ''}</span>
+                        <h3>${esc(item.title)}</h3>
+                        <p class="timeline-institution">${esc(item.institution)}</p>
+                        <p class="timeline-desc">${esc(item.description)}</p>
                         ${tagsHtml}
                     </div>
                 </div>`;
@@ -243,10 +287,10 @@ function rebuildAllSections() {
             } else {
                 certsGrid.innerHTML = PORTFOLIO_DATA.certifications.map(cert => `
                     <div class="cert-card glass-card" data-reveal style="text-align:center;">
-                        ${cert.image ? `<img src="${cert.image}" alt="${cert.title}" style="width:100%;max-width:200px;border-radius:12px;margin-bottom:1rem;">` : ''}
-                        <h3>${cert.title}</h3>
-                        <p style="color:#94A3B8;">${cert.issuer || ''}</p>
-                        <span style="color:#3B82F6;font-size:0.85rem;">${cert.date || ''}</span>
+                        ${safeImg(cert.image) ? `<img src="${esc(safeImg(cert.image))}" alt="${esc(cert.title)}" style="width:100%;max-width:200px;border-radius:12px;margin-bottom:1rem;">` : ''}
+                        <h3>${esc(cert.title)}</h3>
+                        <p style="color:#94A3B8;">${esc(cert.issuer)}</p>
+                        <span style="color:#3B82F6;font-size:0.85rem;">${esc(cert.date)}</span>
                     </div>
                 `).join('');
             }
@@ -262,9 +306,9 @@ function rebuildAllSections() {
             } else {
                 achievementsGrid.innerHTML = PORTFOLIO_DATA.achievements.map(ach => `
                     <div class="achievement-card glass-card" data-reveal style="text-align:center;">
-                        <h3>${ach.title}</h3>
-                        <p style="color:#94A3B8;">${ach.description || ''}</p>
-                        <span style="color:#3B82F6;font-size:0.85rem;">${ach.date || ''}</span>
+                        <h3>${esc(ach.title)}</h3>
+                        <p style="color:#94A3B8;">${esc(ach.description)}</p>
+                        <span style="color:#3B82F6;font-size:0.85rem;">${esc(ach.date)}</span>
                     </div>
                 `).join('');
             }
@@ -292,10 +336,11 @@ function rebuildAllSections() {
     revealElements = document.querySelectorAll('[data-reveal]');
     skillProgressBars = document.querySelectorAll('.skill-progress-bar');
     magneticBtns = document.querySelectorAll('[data-magnetic]');
-    initScrollReveal();
-    initSkillProgress();
-    initMagneticButtons();
-    initCursorHover();
+
+    // Resume link set in admin
+    if (PORTFOLIO_DATA.resumeLink && /^(assets\/|https:\/\/|data:application\/pdf;base64,)/.test(PORTFOLIO_DATA.resumeLink)) {
+        document.querySelectorAll('a[download]').forEach(a => { a.href = PORTFOLIO_DATA.resumeLink; });
+    }
 }
 
 function initScrollReveal() {
@@ -388,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ===== LOADER =====
-window.addEventListener('load', () => {
+function runLoader() {
     let progress = 0;
     const interval = setInterval(() => {
         progress += Math.random() * 25;
@@ -403,8 +448,11 @@ window.addEventListener('load', () => {
         }
         loaderBar.style.width = progress + '%';
     }, 200);
-});
+}
+if (document.readyState === 'complete') runLoader(); else window.addEventListener('load', runLoader);
 document.body.style.overflow = 'hidden';
+// Safety net: never leave the page locked if something fails
+setTimeout(() => { loader.classList.add('hidden'); document.body.style.overflow = ''; }, 8000);
 
 // ===== CURSOR ANIMATION =====
 let mouseX = 0, mouseY = 0;
@@ -429,7 +477,7 @@ function animateCursor() {
     mouseGlow.style.top = mouseY + 'px';
     requestAnimationFrame(animateCursor);
 }
-animateCursor();
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) animateCursor();
 
 document.addEventListener('mousedown', () => {
     cursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
@@ -444,7 +492,7 @@ document.addEventListener('mouseup', () => {
 window.addEventListener('scroll', () => {
     const scrollTop = window.scrollY;
     const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const scrolled = (scrollTop / docHeight) * 100;
+    const scrolled = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
     scrollProgress.style.width = scrolled + '%';
     if (scrollTop > 80) navbar.classList.add('scrolled');
     else navbar.classList.remove('scrolled');
@@ -455,6 +503,7 @@ window.addEventListener('scroll', () => {
 // ===== MOBILE MENU =====
 mobileMenuBtn.addEventListener('click', () => {
     mobileOverlay.classList.toggle('active');
+    mobileMenuBtn.setAttribute('aria-expanded', String(mobileOverlay.classList.contains('active')));
     document.body.style.overflow = mobileOverlay.classList.contains('active') ? 'hidden' : '';
 });
 document.querySelectorAll('.mobile-link').forEach(link => {
@@ -488,7 +537,7 @@ let currentText = '';
 
 function typeEffect() {
     const words = CONFIG.typingWords;
-    const fullWord = words[wordIndex];
+    const fullWord = String(words[wordIndex] ?? '');
     if (isDeleting) {
         currentText = fullWord.substring(0, charIndex - 1);
         charIndex--;
@@ -517,12 +566,16 @@ const typingObserver = new MutationObserver(() => {
 typingObserver.observe(loader, { attributes: true, attributeFilter: ['class'] });
 
 // ===== CONTACT FORM =====
-contactForm.addEventListener('submit', (e) => {
+if (contactForm) contactForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    formFeedback.textContent = 'Message sent successfully! (Demo)';
+    const f = new FormData(contactForm);
+    const to = (PORTFOLIO_DATA && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(PORTFOLIO_DATA.email || '')) ? PORTFOLIO_DATA.email : 'anasali2988@gmail.com';
+    const subject = String(f.get('subject') || ('Portfolio message from ' + f.get('name'))).slice(0, 150);
+    const body = 'Name: ' + f.get('name') + '\nEmail: ' + f.get('email') + '\n\n' + f.get('message');
+    window.location.href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    formFeedback.textContent = 'Opening your email app… if nothing opens, write to ' + to;
     formFeedback.style.color = '#22c55e';
-    contactForm.reset();
-    setTimeout(() => formFeedback.textContent = '', 3000);
+    setTimeout(() => formFeedback.textContent = '', 6000);
 });
 
 // ===== FOOTER YEAR =====
@@ -568,6 +621,15 @@ if (termLauncher) {
     });
 }
 
+if (termLauncher) {
+    termLauncher.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); termLauncher.click(); }
+    });
+}
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && terminalOpen) { termWindow.classList.remove('open'); terminalOpen = false; if (termLauncher) termLauncher.focus(); }
+});
+
 if (termCloseBtn) {
     termCloseBtn.addEventListener('click', () => {
         termWindow.classList.remove('open');
@@ -589,7 +651,7 @@ const commands = {
         "  date       - Current date & time"
     ],
     about: () => {
-        const data = JSON.parse(localStorage.getItem('portfolioData') || '{}');
+        const data = getStoredData();
         return [
             "══════════════════════════════",
             "  Muhammad Anas",
@@ -600,7 +662,7 @@ const commands = {
         ];
     },
     skills: () => {
-        const data = JSON.parse(localStorage.getItem('portfolioData') || '{}');
+        const data = getStoredData();
         if (!data.skills || data.skills.length === 0) return ["No skills data loaded yet."];
         return [
             "═══ Technical Skills ═══",
@@ -608,7 +670,7 @@ const commands = {
         ];
     },
     projects: () => {
-        const data = JSON.parse(localStorage.getItem('portfolioData') || '{}');
+        const data = getStoredData();
         if (!data.projects || data.projects.length === 0) return ["No projects data loaded yet."];
         return [
             "═══ Featured Projects ═══",
@@ -616,7 +678,7 @@ const commands = {
         ];
     },
     contact: () => {
-        const data = JSON.parse(localStorage.getItem('portfolioData') || '{}');
+        const data = getStoredData();
         return [
             "═══ Contact Information ═══",
             `  Email: ${data.email || 'anasali2988@gmail.com'}`,
@@ -634,25 +696,30 @@ const commands = {
     date: () => [new Date().toString()]
 };
 
-function addTerminalLine(text) {
+function termSpan(cls, txt, color) {
+    const el = document.createElement('span');
+    if (cls) el.className = cls;
+    if (color) el.style.color = color;
+    el.textContent = txt;
+    return el;
+}
+function addTerminalLine(text, nodes) {
     if (!termBody) return;
     const line = document.createElement('div');
     line.className = 'terminal-line';
-    line.innerHTML = text;
+    if (nodes) nodes.forEach(n => line.appendChild(n)); else line.textContent = text;
     termBody.appendChild(line);
     termBody.scrollTop = termBody.scrollHeight;
 }
 
 function processCommand(cmd) {
-    addTerminalLine(`<span class="prompt">guest@anas:~$</span> ${cmd}`);
-    const fn = commands[cmd.trim().toLowerCase()];
-    if (fn) {
-        const output = fn();
-        if (Array.isArray(output)) {
-            output.forEach(l => addTerminalLine(l));
-        }
-    } else if (cmd.trim()) {
-        addTerminalLine(`Command not found: <span style="color:#ff6b6b;">${cmd}</span>. Type <span class="cmd-highlight">help</span> for available commands.`);
+    addTerminalLine('', [termSpan('prompt', 'guest@anas:~$'), document.createTextNode(' ' + cmd)]);
+    const key = cmd.trim().toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(commands, key)) {
+        const output = commands[key]();
+        if (Array.isArray(output)) output.forEach(l => addTerminalLine(String(l)));
+    } else if (key) {
+        addTerminalLine('', [document.createTextNode('Command not found: '), termSpan('', cmd, '#ff6b6b'), document.createTextNode('. Type '), termSpan('cmd-highlight', 'help'), document.createTextNode(' for available commands.')]);
     }
 }
 

@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel | Muhammad Anas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,11 +35,11 @@
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
             </div>
-            <h2>Admin Login</h2>
-            <p style="color:#94A3B8; margin-bottom:1.5rem;">Enter password to access dashboard</p>
-            <input type="password" id="passwordInput" placeholder="Password" onkeydown="if(event.key==='Enter')login()">
+            <h2 id="loginTitle">Admin Login</h2>
+            <p id="loginHint" style="color:#94A3B8; margin-bottom:1.5rem;">Enter password to access dashboard</p>
+            <input type="password" id="passwordInput" placeholder="Password" autocomplete="current-password" aria-label="Password" onkeydown="if(event.key==='Enter')login()">
             <button class="btn-primary" onclick="login()">Login</button>
-            <p id="loginError" style="color:#ff6b6b; margin-top:1rem;"></p>
+            <p id="loginError" role="alert" style="color:#ff6b6b; margin-top:1rem;"></p>
         </div>
     </div>
 
@@ -84,6 +87,7 @@
         <div class="tab-content glass-card" id="tabContent"></div>
     </div>
 
+    <script src="data.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>
