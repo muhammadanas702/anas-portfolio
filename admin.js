@@ -113,7 +113,12 @@ function connectHTML() {
     <div class="form-group"><label>Repository</label><input id="ghRepo" value="${esc(c.repo)}"></div>
     <div class="form-group"><label>Branch</label><input id="ghBranch" value="${esc(c.branch)}"></div>
     <div class="form-group"><label>Token ${c.token ? '(saved - leave empty to keep)' : ''}</label><input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_..."></div>
-    <button class="btn-primary" onclick="saveGh()">Save connection</button>`;
+    <button class="btn-primary" onclick="saveGh()">Save connection</button>
+    <h3 style="margin-top:2rem">Inbox &amp; visitor stats (Supabase)</h3>
+    <p style="color:#94A3B8;font-size:.9rem">Needed to save contact messages here and count visitors. After filling these, click <b>Publish</b> at the top.</p>
+    <div class="form-group"><label>Project URL</label><input id="sbUrl" value="${esc((portfolioData.supabase || {}).url || '')}" placeholder="https://xxxx.supabase.co"></div>
+    <div class="form-group"><label>anon / publishable key (safe to be public)</label><input id="sbKey" value="${esc((portfolioData.supabase || {}).anonKey || '')}"></div>
+    <div class="form-group"><label>SQL to run once in Supabase (click to select all)</label><textarea readonly rows="10" onclick="this.select()">${esc(SB_SQL)}</textarea></div>`;
 }
 
 // ===== DATA =====
@@ -149,6 +154,12 @@ function collectCurrentTab() {
   }
   if (g('resumeLabel')) portfolioData.resumeLabel = g('resumeLabel').value.trim().slice(0, 40) || 'Download Resume';
   if (g('contactKey')) { const k = g('contactKey').value.trim(); if (k === '' || /^[0-9a-f-]{20,}$/i.test(k)) portfolioData.contactKey = k; else alert('That does not look like a valid Web3Forms access key.'); }
+  if (g('sbUrl')) {
+    const u = g('sbUrl').value.trim().replace(/\/$/, ''), k = g('sbKey').value.trim();
+    if (!u && !k) delete portfolioData.supabase;
+    else if (/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(u) && /^[\w.-]{20,}$/.test(k)) portfolioData.supabase = { url: u, anonKey: k };
+    else alert('The Supabase URL or key format looks wrong - keeping the previous values.');
+  }
   if (g('resumeLink')) {
     const r = g('resumeLink').value.trim();
     if (safeResume(r)) portfolioData.resumeLink = r; else if (r) alert('Resume link must start with https:// or assets/ - keeping the previous value.');
@@ -156,8 +167,107 @@ function collectCurrentTab() {
 }
 function saveAllData() { return publishData(); }
 
+// ===== INBOX & VISITOR STATS (Supabase) =====
+let currentTab = '', sbToken = sessionStorage.getItem('sbToken') || '';
+const SB_SQL = `-- Run once in Supabase: SQL Editor -> New query -> paste -> Run
+create table if not exists messages (
+  id bigint generated always as identity primary key,
+  created_at timestamptz default now(),
+  name text not null check (char_length(name) between 1 and 100),
+  email text not null check (char_length(email) between 3 and 200),
+  subject text check (char_length(subject) <= 200),
+  message text not null check (char_length(message) between 1 and 5000)
+);
+create table if not exists visits (
+  id bigint generated always as identity primary key,
+  created_at timestamptz default now(),
+  visitor_id text check (char_length(visitor_id) <= 64),
+  path text check (char_length(path) <= 200),
+  referrer text check (char_length(referrer) <= 200),
+  device text check (char_length(device) <= 20),
+  tz text check (char_length(tz) <= 64)
+);
+alter table messages enable row level security;
+alter table visits enable row level security;
+create policy "visitors can send messages" on messages for insert to anon with check (true);
+create policy "visitors can log a visit" on visits for insert to anon with check (true);
+create policy "admin reads messages" on messages for select to authenticated using (true);
+create policy "admin deletes messages" on messages for delete to authenticated using (true);
+create policy "admin reads visits" on visits for select to authenticated using (true);
+`;
+function sbCfg() {
+  const s = portfolioData.supabase;
+  return (s && /^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(s.url || '') && /^[\w.-]{20,}$/.test(s.anonKey || '')) ? s : null;
+}
+async function sbFetch(path, opts) {
+  const s = sbCfg(); if (!s) throw new Error('Add your Supabase URL and key in the Connect tab (then Publish) first.');
+  opts = opts || {};
+  const r = await fetch(s.url + path, Object.assign({}, opts, { headers: Object.assign({ apikey: s.anonKey, Authorization: 'Bearer ' + (sbToken || s.anonKey), 'Content-Type': 'application/json' }, opts.headers || {}) }));
+  if (r.status === 401 || r.status === 403) { sbToken = ''; sessionStorage.removeItem('sbToken'); throw new Error('AUTH'); }
+  if (!r.ok) throw new Error('Supabase error ' + r.status);
+  return r.status === 204 ? null : r.json();
+}
+function setupNeededHTML() {
+  return `<h3>One-time setup needed</h3><ol style="line-height:1.9;color:#cbd5e1">
+    <li>Create a free project at <b>supabase.com</b>.</li>
+    <li>SQL Editor → New query → paste the SQL from the <b>Connect</b> tab → Run.</li>
+    <li>Authentication → Users → <b>Add user</b> (your email + a password, tick auto-confirm). This is your inbox login.</li>
+    <li>Project Settings → API: copy the <b>Project URL</b> and the <b>anon / publishable key</b> into the Connect tab, then click <b>Publish</b>.</li></ol>`;
+}
+function sbLoginHTML(title, note) {
+  return `<h3>${title}</h3><p style="color:#94A3B8">${note}</p><div class="form-group"><label>Supabase admin email</label><input id="sbEmail" type="email" autocomplete="username"></div><div class="form-group"><label>Password</label><input id="sbPass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')sbLogin()"></div><button class="btn-primary" onclick="sbLogin()">Sign in</button>`;
+}
+async function sbLogin() {
+  const s = sbCfg(); if (!s) { alert('Set up Supabase in the Connect tab first.'); return; }
+  try {
+    const r = await fetch(s.url + '/auth/v1/token?grant_type=password', { method: 'POST', headers: { apikey: s.anonKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: document.getElementById('sbEmail').value.trim(), password: document.getElementById('sbPass').value }) });
+    const j = await r.json();
+    if (!r.ok || !j.access_token) throw new Error(j.error_description || j.msg || 'Login failed');
+    sbToken = j.access_token; sessionStorage.setItem('sbToken', sbToken); renderTab(currentTab);
+  } catch (e) { alert('❌ ' + e.message); }
+}
+async function guarded(tab, title, note, render) {
+  const c = document.getElementById('tabContent');
+  if (!sbCfg()) { c.innerHTML = setupNeededHTML(); return; }
+  if (!sbToken) { c.innerHTML = sbLoginHTML(title, note); return; }
+  c.innerHTML = '<p style="color:#94A3B8">Loading…</p>';
+  try { const html = await render(); if (currentTab === tab) c.innerHTML = html; }
+  catch (e) { if (e.message === 'AUTH') renderTab(tab); else if (currentTab === tab) c.innerHTML = '<p style="color:#ff6b6b">' + esc(e.message) + '</p>'; }
+}
+function loadInbox() {
+  return guarded('messages', 'Messages', 'Sign in with the admin user you created in Supabase to read messages.', async () => {
+    const rows = await sbFetch('/rest/v1/messages?select=*&order=created_at.desc&limit=200');
+    return `<h3>Messages (${rows.length})</h3>` + (rows.length ? rows.map(m => `<div class="list-item"><b>${esc(m.name)}</b> &lt;<a href="mailto:${esc(m.email)}" style="color:var(--primary-blue)">${esc(m.email)}</a>&gt;<div style="color:#94A3B8;font-size:.8rem">${esc(new Date(m.created_at).toLocaleString())} · ${esc(m.subject || '(no subject)')}</div><p style="white-space:pre-wrap;margin-top:.6rem">${esc(m.message)}</p><button class="remove-btn" onclick="deleteMessage(${Number(m.id)})">${I.trash}</button></div>`).join('') : '<p style="color:#94A3B8">No messages yet.</p>') + '<button class="add-btn" onclick="loadInbox()">Refresh</button>';
+  });
+}
+async function deleteMessage(id) {
+  if (!confirm('Delete this message?')) return;
+  try { await sbFetch('/rest/v1/messages?id=eq.' + Number(id), { method: 'DELETE' }); loadInbox(); } catch (e) { alert('❌ ' + e.message); }
+}
+function loadStats() {
+  return guarded('visitors', 'Visitors', 'Sign in with the admin user you created in Supabase to see visitor stats.', async () => {
+    const since = new Date(Date.now() - 90 * 864e5).toISOString();
+    const rows = await sbFetch('/rest/v1/visits?select=visitor_id,created_at,device,referrer,tz&created_at=gte.' + encodeURIComponent(since) + '&order=created_at.desc&limit=5000');
+    const now = Date.now(), day = d => new Date(d).toLocaleDateString('en-CA');
+    const within = n => rows.filter(r => now - new Date(r.created_at) < n * 864e5);
+    const uniq = list => new Set(list.map(r => r.visitor_id)).size;
+    const card = (label, big, small) => `<div class="list-item" style="text-align:center"><div style="font-size:1.8rem;font-weight:700">${big}</div><div style="color:#94A3B8;font-size:.85rem">${label}<br>${small}</div></div>`;
+    const today = rows.filter(r => day(r.created_at) === day(now));
+    const days = []; for (let i = 13; i >= 0; i--) { const d = day(now - i * 864e5); days.push({ d, n: rows.filter(r => day(r.created_at) === d).length }); }
+    const max = Math.max(1, ...days.map(x => x.n));
+    const top = (key, n, empty) => { const m = {}; rows.forEach(r => { const k = r[key] || empty; m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((x, y) => y[1] - x[1]).slice(0, n); };
+    const list = (title, arr) => `<h4>${title}</h4>` + (arr.length ? arr.map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:.25rem 0;border-bottom:1px solid var(--border-color)"><span>${esc(k)}</span><b>${v}</b></div>`).join('') : '<p style="color:#94A3B8">No data yet.</p>');
+    return `<h3>Visitors (last 90 days)</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem">${card('Today', uniq(today), today.length + ' views')}${card('Last 7 days', uniq(within(7)), within(7).length + ' views')}${card('Last 30 days', uniq(within(30)), within(30).length + ' views')}${card('Last 90 days', uniq(rows), rows.length + ' views')}</div>
+      <h4>Page views - last 14 days</h4><div style="display:flex;align-items:flex-end;gap:4px;height:120px">${days.map(x => `<div title="${x.d}: ${x.n}" style="flex:1;height:${Math.max(2, x.n / max * 100)}%;background:var(--primary-blue);border-radius:4px 4px 0 0"></div>`).join('')}</div>
+      <div style="display:flex;justify-content:space-between;color:#94A3B8;font-size:.75rem"><span>${days[0].d}</span><span>${days[13].d}</span></div>
+      ${list('Devices', top('device', 4, 'unknown'))}${list('Where visitors come from', top('referrer', 6, 'Direct / unknown'))}${list('Visitor time zones (rough location)', top('tz', 6, 'unknown'))}
+      <p style="color:#94A3B8;font-size:.8rem;margin-top:1rem">Unique visitors are counted per browser. Your own browser is not counted. Stats show up to the latest 5,000 views.</p><button class="add-btn" onclick="loadStats()">Refresh</button>`;
+  });
+}
+
 // ===== TABS =====
-const tabs = ['sections','hero','about','skills','education','projects','experience','certifications','achievements','contact','resume','theme','connect','settings'];
+const tabs = ['sections','messages','visitors','hero','about','skills','education','projects','experience','certifications','achievements','contact','resume','theme','connect','settings'];
 function switchTab(tab) {
   collectCurrentTab();
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -169,6 +279,7 @@ function esc(str) { return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,
 
 function renderTab(tab) {
   const c = document.getElementById('tabContent');
+  currentTab = tab;
   switch(tab) {
     case 'hero': c.innerHTML = heroHTML(); break;
     case 'contact': c.innerHTML = contactHTML(); break;
@@ -182,6 +293,8 @@ function renderTab(tab) {
     case 'resume': c.innerHTML = resumeHTML(); break;
     case 'settings': c.innerHTML = settingsHTML(); break;
     case 'sections': c.innerHTML = sectionsHTML(); break;
+    case 'messages': loadInbox(); break;
+    case 'visitors': loadStats(); break;
     case 'theme': c.innerHTML = themeHTML(); break;
     case 'connect': c.innerHTML = connectHTML(); break;
   }

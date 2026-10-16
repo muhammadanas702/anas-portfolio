@@ -486,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Array.isArray(d.hero && d.hero.typingWords) && d.hero.typingWords.length) CONFIG.typingWords = d.hero.typingWords.map(String);
             rebuildAllSections();
             initScrollReveal(); initSkillProgress(); initMagneticButtons(); initCursorHover();
+            trackVisit();
         });
 });
 
@@ -624,31 +625,63 @@ const typingObserver = new MutationObserver(() => {
 typingObserver.observe(loader, { attributes: true, attributeFilter: ['class'] });
 
 // ===== CONTACT FORM =====
+// ===== BACKEND HELPERS (Supabase = inbox + visitor stats) =====
+function sbValid(sb) { return !!sb && /^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(sb.url || '') && /^[\w.-]{20,}$/.test(sb.anonKey || ''); }
+function sbHeaders(sb) { return { apikey: sb.anonKey, Authorization: 'Bearer ' + sb.anonKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' }; }
+
+function trackVisit() {
+    const sb = PORTFOLIO_DATA && PORTFOLIO_DATA.supabase;
+    if (!sbValid(sb) || navigator.doNotTrack === '1') return;
+    let id = 'anon';
+    try {
+        if (localStorage.getItem('adminPwHash') || sessionStorage.getItem('visitLogged')) return; // don't count the owner / repeat page loads
+        sessionStorage.setItem('visitLogged', '1');
+        id = localStorage.getItem('vid') || (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+        localStorage.setItem('vid', id);
+    } catch (e) {}
+    let ref = '';
+    try { const u = new URL(document.referrer); if (u.host !== location.host) ref = u.host; } catch (e) {}
+    fetch(sb.url + '/rest/v1/visits', {
+        method: 'POST', keepalive: true, headers: sbHeaders(sb),
+        body: JSON.stringify({ visitor_id: id, path: location.pathname.slice(0, 200), referrer: ref.slice(0, 200), device: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'desktop', tz: (Intl.DateTimeFormat().resolvedOptions().timeZone || '').slice(0, 64) })
+    }).catch(() => {});
+}
+
+// ===== CONTACT FORM: sends in the background (email + saved to admin inbox) - never opens a mail app =====
+let lastSent = 0;
 if (contactForm) contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = new FormData(contactForm);
     if (f.get('botcheck')) return; // honeypot: bots fill this
-    const btn = contactForm.querySelector('button[type="submit"]');
     const say = (m, ok) => { formFeedback.textContent = m; formFeedback.style.color = ok ? '#22c55e' : '#ff6b6b'; };
-    const key = PORTFOLIO_DATA && PORTFOLIO_DATA.contactKey;
-    const subject = String(f.get('subject') || ('Portfolio message from ' + f.get('name'))).slice(0, 150);
-    if (key && /^[0-9a-f-]{20,}$/i.test(key)) {
-        btn.disabled = true; say('Sending…', true);
+    if (Date.now() - lastSent < 20000) { say('Please wait a few seconds before sending another message.', false); return; }
+    const btn = contactForm.querySelector('button[type="submit"]');
+    const D = PORTFOLIO_DATA || {};
+    const name = String(f.get('name') || '').slice(0, 100), email = String(f.get('email') || '').slice(0, 200);
+    const message = String(f.get('message') || '').slice(0, 5000);
+    const subject = String(f.get('subject') || ('Portfolio message from ' + name)).slice(0, 200);
+    const to = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(D.email || '') ? D.email : 'anasali2988@gmail.com';
+    const key = D.contactKey && /^[0-9a-f-]{20,}$/i.test(D.contactKey) ? D.contactKey : '';
+    const sendMail = async () => {
         try {
-            const res = await fetch('https://api.web3forms.com/submit', {
+            const r = await fetch(key ? 'https://api.web3forms.com/submit' : 'https://formsubmit.co/ajax/' + encodeURIComponent(to), {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ access_key: key, name: f.get('name'), email: f.get('email'), subject: subject, message: f.get('message'), from_name: 'Portfolio Contact Form' })
+                body: JSON.stringify(key ? { access_key: key, name, email, subject, message, from_name: 'Portfolio Contact Form' } : { name, email, _subject: subject, message, _captcha: 'false', _template: 'table' })
             });
-            const j = await res.json();
-            if (j.success) { say('Message sent! I will get back to you soon.', true); contactForm.reset(); }
-            else say('Could not send: ' + (j.message || 'please try again.'), false);
-        } catch (err) { say('Network error. Please try again or email me directly.', false); }
-        btn.disabled = false;
-    } else {
-        const to = (PORTFOLIO_DATA && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(PORTFOLIO_DATA.email || '')) ? PORTFOLIO_DATA.email : 'anasali2988@gmail.com';
-        window.location.href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent('Name: ' + f.get('name') + '\nEmail: ' + f.get('email') + '\n\n' + f.get('message'));
-        say('Opening your email app…', true);
-    }
+            const j = await r.json().catch(() => ({}));
+            return r.ok && (j.success === true || j.success === 'true');
+        } catch (err) { return false; }
+    };
+    const saveDb = async () => {
+        if (!sbValid(D.supabase)) return false;
+        try { return (await fetch(D.supabase.url + '/rest/v1/messages', { method: 'POST', headers: sbHeaders(D.supabase), body: JSON.stringify({ name, email, subject, message }) })).ok; }
+        catch (err) { return false; }
+    };
+    btn.disabled = true; say('Sending…', true);
+    const [mailOk, dbOk] = await Promise.all([sendMail(), saveDb()]);
+    btn.disabled = false;
+    if (mailOk || dbOk) { lastSent = Date.now(); say('Message sent! I will get back to you soon.', true); contactForm.reset(); }
+    else say('Sorry, the message could not be sent. Please try again in a moment.', false);
     setTimeout(() => { formFeedback.textContent = ''; }, 8000);
 });
 
